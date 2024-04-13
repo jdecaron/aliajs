@@ -9,11 +9,11 @@ exports.exec = async ({ command, response, secrets }) => {
   try {
     let hidden = hide({ target: command, secrets })
     console.log('\x1b[33m%s\x1b[0m', hidden)
-    typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
+    typeof response === 'object' && response.body(`\x1b[33m${hidden}\x1b[0m\n`)
     const { stdout } = (await exec(command, { maxBuffer: 1024 * 1024 * 4 }))
     hidden = hide({ target: stdout, secrets })
     console.log(hidden)
-    typeof response === 'object' && response.write(`${hidden}\n`)
+    typeof response === 'object' && response.body(`${hidden}\n`)
     return stdout
   } catch (error) {
     throw hide({ target: error, secrets })
@@ -152,14 +152,14 @@ exports.SSH = ({ address, keyName, response }) => {
     try {
       let hidden = hide({ target: command, secrets })
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
-      typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
+      typeof response === 'object' && response.body(`\x1b[33m${hidden}\x1b[0m\n`)
       let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
       stdout = stdout.slice(stdout.indexOf('6DFqRyWxivCaZxp4MCWLgX') + 23)
       hidden = hide({ target: stdout, secrets })
-      typeof response === 'object' && response.write(`${hidden}\n`)
+      typeof response === 'object' && response.body(`${hidden}\n`)
       console.log(hidden)
       return stdout
     } catch (error) {
