@@ -1,7 +1,6 @@
 require('dotenv').config()
 
-let { log } = require('./src/logger')
-log = log({ __filename })
+const log = require('./logger')(__filename)
 
 const AWS = require('aws-sdk')
 const ejs = require('yeahjs')
@@ -12,15 +11,11 @@ const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
 
-const renderFile = util.promisify(ejs.renderFile)
+// AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
+// AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 
-process.exit(0)
-
-AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
-AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
-
-const info = { params: {} }
-const ec2 = new AWS.EC2()
+// const info = { params: {} }
+// const ec2 = new AWS.EC2()
 
 exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
   info.params.describeImages = {

@@ -2,7 +2,7 @@ const log = require('./logger')(__filename)
 const utils = require('./utils')
 
 const { Hono } = require('hono')
-// const { initInstances } = require('../new-instance')
+const { initInstances } = require('./new-instance')
 
 const app = new Hono()
 

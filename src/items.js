@@ -1,9 +1,7 @@
-const { logger } = require('@zoneia/holocron-common')
 const child_process = require('child_process')
 const crypto = require('crypto')
 const fs = require('fs')
-
-const log = logger.child({ __filename })
+const log = require('./logger')(__filename)
 
 exports.getItem = ({ items, name }) => {
   for (let i = 0; i < items.length; i++) {
@@ -98,24 +96,24 @@ exports.setItems = ({ index, items }) => {
 exports.items = {}
 
 exports.validations = {
-  certificates: {},
-  development: {},
+  // certificates: {},
+  // development: {},
   operations: {},
 }
 
 function backup({ data }) {
-  const key = crypto.createHash('sha512').update(process.env.HOLOCRON_VARIABLE_2).digest('hex').substring(0, 32)
+  const key = crypto.createHash('sha512').update(process.env.ALIAJS_VARIABLE_2).digest('hex').substring(0, 32)
   const encryptionIV = crypto.createHash('sha512').update('').digest('hex').substring(0, 16)
   const cipher = crypto.createCipheriv('aes-256-cbc', key, encryptionIV)
   const final = `${cipher.update(data, 'utf8', 'hex')}${cipher.final('hex')}`
-  fs.writeFileSync(`../.holocron-sauce-backup-9f6e7ec1`, final)
-  fs.writeFileSync(`../.holocron-sauce-backup-9f6e7ec1-${Date.now()}`, final)
+  fs.writeFileSync(`../.aliajs-sauce-backup-9f6e7ec1`, final)
+  fs.writeFileSync(`../.aliajs-sauce-backup-9f6e7ec1-${Date.now()}`, final)
   validate()
 }
 
 function restore() {
-  const data = fs.readFileSync(`../.holocron-sauce-backup-9f6e7ec1`).toString('utf8')
-  const key = crypto.createHash('sha512').update(process.env.HOLOCRON_VARIABLE_2).digest('hex').substring(0, 32)
+  const data = fs.readFileSync(`../.aliajs-sauce-backup-9f6e7ec1`).toString('utf8')
+  const key = crypto.createHash('sha512').update(process.env.ALIAJS_VARIABLE_2).digest('hex').substring(0, 32)
   const encryptionIV = crypto.createHash('sha512').update('').digest('hex').substring(0, 16)
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, encryptionIV)
   const final = `${decipher.update(data, 'hex', 'utf8')}${decipher.final('utf8')}`
@@ -125,21 +123,22 @@ function restore() {
 
 function validate() {
   for (const name in exports.validations) {
-    if (exports.getNotes({ items: exports.items[name], name: 'restore_validation' }) !== '9f6e7ec1') {
+    if (exports.getNotes({ items: exports.items[name], name: 'restore_validation' }) !== process.env.RESTORE_VALIDATION) {
       throw Error(`restore: Validations failed, could not validate 'restore_validation' notes for ${name}`)
     }
   }
 }
 
 try {
-  exports.items.operations = exports.getItems({ variables: [process.env.HOLOCRON_VARIABLE_0, process.env.HOLOCRON_VARIABLE_1, process.env.HOLOCRON_VARIABLE_2] })
+  exports.items.operations = exports.getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
   exports.items.operations.variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))
 
-  exports.items.development = exports.getItems({ variables: exports.items.operations.variables[0] })
-  exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
+  // exports.items.development = exports.getItems({ variables: exports.items.operations.variables[0] })
+  // exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
   backup({ data: JSON.stringify(exports.items) })
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
+
   log.error({ error, message, syncF2f8844b: true, slack: 'operations' })
   throw Error(message)
   // Uncomment the restore() lines below only in case of a catastrophic event.
