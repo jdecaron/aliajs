@@ -3,7 +3,7 @@ exports.instances = [
     "name": "aliajs-production",
     "address": "15.157.29.183",
     // "imageName": "aliajs-node-18-ami",
-    "type": "t3a.medium",
+    "type": "t3a.nano",
     "services": [
       {
         "name": "aliajs",

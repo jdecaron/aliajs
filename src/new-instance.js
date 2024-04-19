@@ -3,7 +3,7 @@ require('dotenv').config()
 const log = require('./logger')(__filename)
 
 const AWS = require('aws-sdk')
-const ejs = require('yeahjs')
+// const ejs = require('yeahjs')
 const fs = require('fs')
 const util = require('util')
 // const deploy = require('./deploy')
@@ -12,10 +12,12 @@ const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
 
 // AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
-// AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
+AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 
-// const info = { params: {} }
-// const ec2 = new AWS.EC2()
+console.log(require('util').inspect(process.env, { depth: Infinity }))
+
+const info = { params: {} }
+const ec2 = new AWS.EC2()
 
 exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
   info.params.describeImages = {
@@ -30,6 +32,7 @@ exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
   }
   return ec2.describeImages(info.params.describeImages).promise()
     .then(async ({ Images }) => {
+      console.log(require('util').inspect(Images, { depth: Infinity }))
       info.params.runInstances = {
         ImageId: Images[0].ImageId,
         InstanceType: type,
@@ -87,9 +90,9 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
   const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
   // const Reservations = [{
   //   Instances: [{
-  //     InstanceId: 'i-0deac4b3edf3335e5',
-  //     PrivateIpAddress: '172.31.18.196',
-  //     PublicIpAddress: '15.222.61.228',
+  //     InstanceId: '',
+  //     PrivateIpAddress: '',
+  //     PublicIpAddress: '',
   //   }],
   // }]
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
@@ -106,8 +109,8 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
     }
   }
 
-  const filebeatConfig = await renderFile(`${__dirname}/../templates/elk/filebeat.yml`, {})
-  fs.writeFileSync(`${temp}/filebeat.yml`, filebeatConfig)
+  // const filebeatConfig = await renderFile(`${__dirname}/../templates/elk/filebeat.yml`, {})
+  // fs.writeFileSync(`${temp}/filebeat.yml`, filebeatConfig)
   const remoteTemp = (await ssh.new({ command: `mktemp -d` })).replace(/\s$/, '')
   await exec({ command: `rsync -az ${temp}/ ${process.env.HOLOCRON_DEFAULT_USER}@${Reservations[0].Instances[0].PublicIpAddress}:${remoteTemp}` })
   await ssh.new({ command: `sudo mv ${remoteTemp}/filebeat.yml /etc/filebeat/filebeat.yml`})
