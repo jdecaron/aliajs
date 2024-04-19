@@ -11,10 +11,7 @@ const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
 
-// AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
 AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
-
-console.log(require('util').inspect(process.env, { depth: Infinity }))
 
 const info = { params: {} }
 const ec2 = new AWS.EC2()
@@ -32,7 +29,6 @@ exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
   }
   return ec2.describeImages(info.params.describeImages).promise()
     .then(async ({ Images }) => {
-      console.log(require('util').inspect(Images, { depth: Infinity }))
       info.params.runInstances = {
         ImageId: Images[0].ImageId,
         InstanceType: type,

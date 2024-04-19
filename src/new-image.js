@@ -1,13 +1,12 @@
 require('dotenv').config({ path: `${__dirname}/../.env` })
 
+const log = require('./logger')(__filename)
+
 const AWS = require('aws-sdk')
 const items = require('./items')
 const { install, SSH } = require('./utils')
 const configurations = require('../configurations/images')
 
-const log = logger.child({ __filename })
-
-AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: process.env.AWS_PROFILE })
 AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 
 const ec2 = new AWS.EC2()
@@ -19,7 +18,6 @@ info.params.describeImages = {
 }
 ec2.describeImages(info.params.describeImages).promise()
   .then(async ({ Images }) => {
-    console.log(require('util').inspect(Images, { depth: Infinity }))
     info.params.deregisterImage = []
     Images.map(async (image) => {
       const params = { ImageId: image.ImageId }
@@ -44,7 +42,7 @@ ec2.describeImages(info.params.describeImages).promise()
       info.params.runInstances = {
         ImageId: image.ImageId,
         InstanceType: process.env.AWS_DEFAULT_INSTANCE_TYPE,
-        KeyName: process.env.HOLOCRON_KEY_NAME,
+        KeyName: process.env.ALIAJS_KEY_NAME,
         MaxCount: 1,
         MinCount: 1,
         SecurityGroupIds: [
@@ -57,7 +55,7 @@ ec2.describeImages(info.params.describeImages).promise()
             Tags: [
               {
                 Key: 'Name',
-                Value: 'holocron-new-image',
+                Value: 'aliajs-new-image',
               },
             ],
           },
@@ -68,9 +66,9 @@ ec2.describeImages(info.params.describeImages).promise()
       info.Instance = Reservations[0].Instances[0]
       await ec2.waitFor('systemStatusOk', { InstanceIds: [info.Instance.InstanceId] }).promise()
 
-      const ssh = SSH({ address: info.Instance.PublicIpAddress, keyName: process.env.HOLOCRON_KEY_NAME })
+      const ssh = SSH({ address: info.Instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME })
       await install({
-        home: process.env.HOLOCRON_DEFAULT_HOME,
+        home: process.env.ALIAJS_DEFAULT_PATH,
         major: image.major,
         ssh,
       })
