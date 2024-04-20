@@ -68,9 +68,10 @@ ec2.describeImages(info.params.describeImages).promise()
 
       const ssh = SSH({ address: info.Instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME })
       await install({
-        home: process.env.ALIAJS_DEFAULT_PATH,
+        path: process.env.ALIAJS_DEFAULT_PATH,
         major: image.major,
         ssh,
+        user: process.env.ALIAJS_DEFAULT_USER,
       })
 
       // Create new image.

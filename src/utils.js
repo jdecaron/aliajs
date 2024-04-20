@@ -90,7 +90,9 @@ function hide({ target, secrets }) {
   return result
 }
 
-exports.install = async function ({ home, major, ssh }) {
+exports.install = async function ({ path, major, ssh, user }) {
+  await ssh({ command: `sudo mkdir ${path}` })
+  await ssh({ command: `sudo chown ${user} ${path}` })
   await ssh({ command: `echo 'LineMax=1M' | sudo tee -a /etc/systemd/journald.conf` })
   await ssh({ command: `echo '$MaxMessageSize 64k' | sudo tee -a /etc/rsyslog.conf` })
 
@@ -107,22 +109,22 @@ exports.install = async function ({ home, major, ssh }) {
   await ssh({ command: 'sudo apt-get -y install prometheus-node-exporter' })
 
   const latestNode = await exports.getLatestNode({ major })
-  for (const command of exports.installNode({ home, latestNode, major })) {
+  for (const command of exports.installNode({ path, latestNode, major })) {
     await ssh({ command })
   }
-  await ssh({ command: `sudo ln -f -s ${home}/opt/${latestNode.path}/bin/node /usr/bin/node` })
-  await ssh({ command: `sudo ln -f -s ${home}/opt/${latestNode.path}/bin/npm /usr/bin/npm` })
-  await ssh({ command: `sudo ln -f -s ${home}/opt/${latestNode.path}/bin/npx /usr/bin/npx` })
+  await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/node /usr/bin/node` })
+  await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npm /usr/bin/npm` })
+  await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npx /usr/bin/npx` })
 
   await ssh({ command: 'sudo unattended-upgrade -d' })
 }
 
-exports.installNode = ({ home, latestNode, major }) => {
+exports.installNode = ({ path, latestNode, major }) => {
   return [
-    `curl https://nodejs.org/download/release/latest-v${major}.x/${latestNode.file} > ${home}/${latestNode.file}`,
-    `cd ${home}; echo "${latestNode.checksum}  ${latestNode.file}" | sha256sum -c`,
-    `mkdir ${home}/opt || true`,
-    `tar -xf ${home}/${latestNode.file} -C ${home}/opt`,
+    `curl https://nodejs.org/download/release/latest-v${major}.x/${latestNode.file} > ${path}/${latestNode.file}`,
+    `cd ${path}; echo "${latestNode.checksum}  ${latestNode.file}" | sha256sum -c`,
+    `mkdir ${path}/opt || true`,
+    `tar -xf ${path}/${latestNode.file} -C ${path}/opt`,
   ]
 }
 
