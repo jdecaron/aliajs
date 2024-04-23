@@ -96,8 +96,8 @@ exports.setItems = ({ index, items }) => {
 exports.items = {}
 
 exports.validations = {
-  // certificates: {},
-  // development: {},
+  certificates: {},
+  development: {},
   operations: {},
 }
 
@@ -133,8 +133,8 @@ try {
   exports.items.operations = exports.getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
   exports.items.operations.variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))
 
-  // exports.items.development = exports.getItems({ variables: exports.items.operations.variables[0] })
-  // exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
+  exports.items.development = exports.getItems({ variables: exports.items.operations.variables[0] })
+  exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
   backup({ data: JSON.stringify(exports.items) })
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
