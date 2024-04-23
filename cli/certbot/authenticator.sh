@@ -2,7 +2,7 @@
 
 # https://certbot.eff.org/docs/using.html#pre-and-post-validation-hooks
 
-RECORD_ID=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/84f030b8865f04484b14f533770df715/dns_records" \
+RECORD_ID=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_ID/dns_records" \
   -H "Authorization: Bearer $CF_API_KEY" \
   -H "Content-Type: application/json" \
   --data '{"type":"TXT","name":"'_acme-challenge'","content":"'"$CERTBOT_VALIDATION"'","ttl":120}' \ | python3 -c "import sys,json;print(json.load(sys.stdin)['result']['id'])")

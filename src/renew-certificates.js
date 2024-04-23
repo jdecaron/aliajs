@@ -24,9 +24,10 @@ exports.renewCertificates = async () => {
     if (host.mode === 'dns') {
       const temp = (await ssh.current({ command: 'mktemp -d' })).replace(/\s$/, '')
       const token = getNotes({ items: items.operations, name: `DNS API token (${domain})` })
+      const zoneID = getNotes({ items: items.operations, name: `DNS Zone ID (${domain})` })
       await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/authenticator.sh cli/certbot/cleanup.sh ubuntu@${host.host}:${temp}` })
       await ssh.current({ command: `chmod a+x ${temp}/*.sh` })
-      await ssh.current({ command: `export CF_API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, secrets: [ token ] })
+      await ssh.current({ command: `export CF_ZONE_ID=${zoneID}; export CF_API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, secrets: [ token ] })
     } else {
       await ssh.current({ command: `sudo certbot certonly -n -m certbot@${host.host} --agree-tos --nginx --force-renewal ${list}`, secrets: [] })
     }
