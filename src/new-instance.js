@@ -225,7 +225,7 @@ async function initTelemetryInstance ({ response }) {
   await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
   await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
 
-  const address = configurations.instances[configurations.instances.length - 1].address
+  const address = ''
   const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
   const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
   const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
