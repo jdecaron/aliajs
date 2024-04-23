@@ -82,7 +82,7 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
   console.log('instance', instance)
   const { imageName, name, services, type } = instance
 
-  const keyName = instance.keyName || process.env.HOLOCRON_KEY_NAME
+  const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
   const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
   // const Reservations = [{
   //   Instances: [{
@@ -108,38 +108,38 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
   // const filebeatConfig = await renderFile(`${__dirname}/../templates/elk/filebeat.yml`, {})
   // fs.writeFileSync(`${temp}/filebeat.yml`, filebeatConfig)
   const remoteTemp = (await ssh.new({ command: `mktemp -d` })).replace(/\s$/, '')
-  await exec({ command: `rsync -az ${temp}/ ${process.env.HOLOCRON_DEFAULT_USER}@${Reservations[0].Instances[0].PublicIpAddress}:${remoteTemp}` })
-  await ssh.new({ command: `sudo mv ${remoteTemp}/filebeat.yml /etc/filebeat/filebeat.yml`})
-  await ssh.new({ command: 'sudo chown root:root /etc/filebeat/filebeat.yml' })
-  await ssh.new({ command: 'sudo chmod 600 /etc/filebeat/filebeat.yml' })
-  await ssh.new({ command: 'sudo service filebeat start' })
-  await ssh.new({ command: 'sudo systemctl enable filebeat' })
+  await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${Reservations[0].Instances[0].PublicIpAddress}:${remoteTemp}` })
+  // await ssh.new({ command: `sudo mv ${remoteTemp}/filebeat.yml /etc/filebeat/filebeat.yml`})
+  // await ssh.new({ command: 'sudo chown root:root /etc/filebeat/filebeat.yml' })
+  // await ssh.new({ command: 'sudo chmod 600 /etc/filebeat/filebeat.yml' })
+  // await ssh.new({ command: 'sudo service filebeat start' })
+  // await ssh.new({ command: 'sudo systemctl enable filebeat' })
 
   for (let j = 0; j < services.length; j++) {
     const service = services[j]
     console.log('service', service)
 
-    let checkout
-    if (service.type === 'express') {
-      const directory = (await ssh.current({ command: `ls -t | grep ^${service.name} | head -n 1` })).replace(/\s$/, '')
-      const status = await ssh.current({ command: `cd ${directory} && git status` })
-      checkout = status.split('\n')[0].split(' ').pop()
-    }
+    // let checkout
+    // if (service.type === 'express') {
+    //   const directory = (await ssh.current({ command: `ls -t | grep ^${service.name} | head -n 1` })).replace(/\s$/, '')
+    //   const status = await ssh.current({ command: `cd ${directory} && git status` })
+    //   checkout = status.split('\n')[0].split(' ').pop()
+    // }
 
-    const domains = service.domains || [`${service.name}-${service.tier}.zoneia.com`]
-    for (const domain of domains) {
-      const name = getDomain({ domain })
-      const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
-      const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
-      const registry = getNotes({ items: items.operations, name: 'GitLab registry token' })
-      await ssh.new({ command: `echo '${registry}' > ~/.npmrc`, secrets: [] })
-      await ssh.new({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
-      await ssh.new({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
-      await ssh.new({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
-      await ssh.new({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
-      await ssh.new({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
-      await ssh.new({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
-    }
+    const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]
+    // for (const domain of domains) {
+    //   const name = getDomain({ domain })
+    //   const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
+    //   const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
+    //   const registry = getNotes({ items: items.operations, name: 'GitLab registry token' })
+    //   await ssh.new({ command: `echo '${registry}' > ~/.npmrc`, secrets: [] })
+    //   await ssh.new({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
+    //   await ssh.new({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
+    //   await ssh.new({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
+    //   await ssh.new({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
+    //   await ssh.new({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
+    //   await ssh.new({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
+    // }
 
     // await deploy[service.type]({
     //   address: Reservations[0].Instances[0].PublicIpAddress,
@@ -183,9 +183,10 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
         PublicIp: instance.address,
       }).promise()
 
-      // !!!!!!!! Code below this line is not guaranteed to run on
-      // holocron-orchestrator since the code below is terminating
-      // instances, including the one it's running this very code.
+      // !!!!!!!! Code below this line is not guaranteed to run on aliajs
+      // since the code below is terminating instances. aliajs could
+      // be terminated (shutdown) before it can finish this for loop.
+      // That's why aliajs is the last item of instances[].
       for (let k = 0; k < runningReservations.length; k++) {
         const runningInstances = runningReservations[k].Instances
         for (let l = 0; l < runningInstances.length; l++) {
@@ -224,11 +225,11 @@ async function initTelemetryInstance ({ response }) {
   await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
   await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
 
-  const address = '35.183.191.84'
-  const ssh = SSH({ address, keyName: process.env.HOLOCRON_KEY_NAME, response })
+  const address
+  const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
   const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
   const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
-  await exec({ command: `rsync -az ${temp}/ ${process.env.HOLOCRON_DEFAULT_USER}@${address}:${remoteTemp}` })
+  await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${address}:${remoteTemp}` })
   await ssh({ command: `sudo cp ${remoteTemp}/prometheus.yml /var/snap/prometheus/current/prometheus.yml` })
   await ssh({ command: `sudo cp ${remoteTemp}/alerts.yml /var/snap/prometheus/current/alerts.yml` })
   await ssh({ command: `sudo cp ${remoteTemp}/alertmanager.yml /var/snap/prometheus-alertmanager/current/alertmanager.yml` })
