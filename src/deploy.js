@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 const dotenv = require('dotenv')
 dotenv.config({ path: `${__dirname}/../.env` })
-const { logger } = require('@zoneia/holocron-common')
 const retry = require('async-retry')
 const dns = require('dns')
 const ejs = require('ejs')
@@ -21,7 +20,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
 
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
   const repository = `${temp}/repository`
-  const staticBuilds = `${process.env.HOLOCRON_DEFAULT_HOME}/static-builds-${service.tier}`
+  const staticBuilds = `${process.env.ALIAJS_DEFAULT_PATH}/static-builds-${service.tier}`
   const unique = `${service.name}-${Date.now()}`
   const uniqueBuilds = {}
 
@@ -38,7 +37,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
     await exec({ command: `git clone git@gitlab.com:zoneia/${builds[0].build}.git ${repository}`})
 
     if (checkout === undefined || checkout === '') {
-      checkout = process.env.HOLOCRON_DEFAULT_CHECKOUT
+      checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
       try {
         checkout = JSON.parse(await ssh.current({ command: `cat ${staticBuilds}/${service.name}-default.json` })).checkout
       } catch (error) {
@@ -70,10 +69,10 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   }
 
   if (domain === undefined) {
-    domain = process.env.HOLOCRON_DEFAULT_DOMAIN
+    domain = process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
   }
   if (user === undefined) {
-    user = process.env.HOLOCRON_DEFAULT_USER
+    user = process.env.ALIAJS_DEFAULT_USER
   }
 
   const server_name = `${service.name}-${service.tier}.${domain}`
@@ -97,7 +96,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   await ssh.new({ command: `sudo cp -f ${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await setup({ data: { address, holocron_key_name: process.env.HOLOCRON_KEY_NAME, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
@@ -106,7 +105,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
 
 exports.express = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
-    checkout = process.env.HOLOCRON_DEFAULT_CHECKOUT
+    checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {
       const directory = (await ssh.current({ command: `ls -t | grep ^${service.name} | head -n 1` })).replace(/\s$/, '')
       const status = await ssh.current({ command: `cd ${directory} && git status` })
@@ -116,13 +115,13 @@ exports.express = async function ({ address, checkout, domain, exec, home, initi
     }
   }
   if (domain === undefined) {
-    domain = process.env.HOLOCRON_DEFAULT_DOMAIN
+    domain = process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
   }
   if (home === undefined) {
-    home = process.env.HOLOCRON_DEFAULT_HOME
+    home = process.env.ALIAJS_DEFAULT_PATH
   }
   if (user === undefined) {
-    user = process.env.HOLOCRON_DEFAULT_USER
+    user = process.env.ALIAJS_DEFAULT_USER
   }
 
   const server_name = `${service.name}-${service.tier}.${domain}`
@@ -178,9 +177,9 @@ exports.express = async function ({ address, checkout, domain, exec, home, initi
   fs.writeFileSync(`${temp}/service`, system)
 
   const locations = [{ location: '/', proxy_pass: `http://127.0.0.1:${port}` }]
-  if (service.name === 'holocron-orchestrator') {
+  if (service.name === 'aliajs') {
     locations[0].proxy_read_timeout = '500s'
-    fs.appendFileSync(`${temp}/.env`, `\nSEARCH_URL=${process.env.SEARCH_URL}\nHOLOCRON_VARIABLE_0=${process.env.HOLOCRON_VARIABLE_0}\nHOLOCRON_VARIABLE_1=${process.env.HOLOCRON_VARIABLE_1}\nHOLOCRON_VARIABLE_2=${process.env.HOLOCRON_VARIABLE_2}`)
+    fs.appendFileSync(`${temp}/.env`, `\nALIAJS_VARIABLE_0=${process.env.ALIAJS_VARIABLE_0}\nALIAJS_VARIABLE_1=${process.env.ALIAJS_VARIABLE_1}\nALIAJS_VARIABLE_2=${process.env.ALIAJS_VARIABLE_2}`)
   }
   const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, server_name })
   fs.writeFileSync(`${temp}/nginx`, config)
@@ -195,7 +194,7 @@ exports.express = async function ({ address, checkout, domain, exec, home, initi
 
   if (initial) {
     await ssh.new({ command: `echo '127.0.0.1 ${server_name}' | sudo tee -a /etc/hosts` })
-    await setup({ data: { address, holocron_key_name: process.env.HOLOCRON_KEY_NAME, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
   }
   await setup({ data: { instance, unique_service_name }, exec, service, ssh, type: 'post-build' })
 
@@ -225,8 +224,8 @@ exports.express = async function ({ address, checkout, domain, exec, home, initi
     }
   })
 
-  if (service.name === 'holocron-orchestrator') {
-    await ssh.new({ command: `echo \"0 5 * * 0 cd /home/ubuntu/${unique_service_name} && /usr/bin/node /home/ubuntu/${unique_service_name}/cli/renew-certificates.js > renew-certificates.log 2>&1\n0 6 * * * cd /home/ubuntu/${unique_service_name} && /usr/bin/node /home/ubuntu/${unique_service_name}/src/new-image.js > new-image.log 2>&1\n30 8 * * * cd /home/ubuntu/${unique_service_name} && /usr/bin/node /home/ubuntu/${unique_service_name}/src/refresh.js > refresh.log 2>&1\" >> holocron_cron; crontab holocron_cron; rm holocron_cron` })
+  if (service.name === 'aliajs') {
+    await ssh.new({ command: `echo \"0 5 * * 0 cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/cli/renew-certificates.js > renew-certificates.log 2>&1\n0 6 * * * cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/src/new-image.js > new-image.log 2>&1\n30 8 * * * cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/src/refresh.js > refresh.log 2>&1\" >> aliajs_cron; crontab aliajs_cron; rm aliajs_cron` })
   }
 
   for (let i = 0; i < services.length; i++) {
