@@ -1,6 +1,8 @@
-#!/usr/bin/env node
 const dotenv = require('dotenv')
-dotenv.config({ path: `${__dirname}/../.env` })
+dotenv.config()
+
+const log = require('./logger')(__filename)
+
 const retry = require('async-retry')
 const dns = require('dns')
 const ejs = require('ejs')
@@ -9,8 +11,6 @@ const https = require('https')
 const fetch = require('node-fetch')
 const util = require('util')
 const { getItems, getNotes, items } = require('./items')
-
-const log = logger.child({ __filename })
 
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
@@ -103,7 +103,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-exports.express = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
+exports.javascript  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
     checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {
@@ -137,7 +137,7 @@ exports.express = async function ({ address, checkout, domain, exec, home, initi
     return folder.match(new RegExp(`^${service.name}`))
   }).reverse()
 
-  await exec({ command: `git clone git@gitlab.com:zoneia/${service.name}.git ${temp}`})
+  await exec({ command: `git clone ${service.remote_repository} ${temp}`})
   await exec({ command: `cd ${temp} && git checkout ${checkout}` })
   await exec({ command: `cd ${temp} && ${command({ service, type: 'packages' })}` })
   await exec({ command: `cd ${temp} && ${command({ service, type: 'build' })}` })

@@ -3,13 +3,15 @@ require('dotenv').config()
 const log = require('./logger')(__filename)
 
 const AWS = require('aws-sdk')
-// const ejs = require('yeahjs')
+const ejs = require('ejs')
 const fs = require('fs')
 const util = require('util')
-// const deploy = require('./deploy')
+const deploy = require('./deploy')
 const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
+
+const renderFile = util.promisify(ejs.renderFile)
 
 AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 
@@ -83,14 +85,14 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-  const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
-  // const Reservations = [{
-  //   Instances: [{
-  //     InstanceId: '',
-  //     PrivateIpAddress: '',
-  //     PublicIpAddress: '',
-  //   }],
-  // }]
+  // const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
+  const Reservations = [{
+    Instances: [{
+      InstanceId: 'i-0dd34af5b000b66cd',
+      PrivateIpAddress: '172.31.12.177',
+      PublicIpAddress: '15.157.29.183',
+    }],
+  }]
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
@@ -119,37 +121,38 @@ exports.initInstance = async ({ address, instance, response, temp }) => {
     const service = services[j]
     console.log('service', service)
 
+    let checkout = 'main'
     // let checkout
-    // if (service.type === 'express') {
+    // if (service.type === 'javascript') {
     //   const directory = (await ssh.current({ command: `ls -t | grep ^${service.name} | head -n 1` })).replace(/\s$/, '')
     //   const status = await ssh.current({ command: `cd ${directory} && git status` })
     //   checkout = status.split('\n')[0].split(' ').pop()
     // }
 
     const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]
-    // for (const domain of domains) {
-    //   const name = getDomain({ domain })
-    //   const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
-    //   const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
-    //   const registry = getNotes({ items: items.operations, name: 'GitLab registry token' })
-    //   await ssh.new({ command: `echo '${registry}' > ~/.npmrc`, secrets: [] })
-    //   await ssh.new({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
-    //   await ssh.new({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
-    //   await ssh.new({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
-    //   await ssh.new({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
-    //   await ssh.new({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
-    //   await ssh.new({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
-    // }
+    for (const domain of domains) {
+      const name = getDomain({ domain })
+      const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
+      const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
+      const registry = getNotes({ items: items.operations, name: 'GitLab registry token' })
+      await ssh.new({ command: `echo '${registry}' > ~/.npmrc`, secrets: [] })
+      await ssh.new({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
+      await ssh.new({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
+      await ssh.new({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
+      await ssh.new({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
+      await ssh.new({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
+      await ssh.new({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
+    }
 
-    // await deploy[service.type]({
-    //   address: Reservations[0].Instances[0].PublicIpAddress,
-    //   checkout,
-    //   exec,
-    //   initial: true,
-    //   instance,
-    //   service,
-    //   ssh,
-    // })
+    await deploy[service.type]({
+      address: Reservations[0].Instances[0].PublicIpAddress,
+      checkout,
+      exec,
+      initial: true,
+      instance,
+      service,
+      ssh,
+    })
   }
 
   return Reservations
@@ -172,7 +175,7 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
           // fully fonctionnal. Otherwise there will be issues with the ssh commands
           // during the initTelemetryInstance process.
           // await (new Promise((resolve) => { setTimeout(resolve, 300000) }))
-          await initTelemetryInstance({ response })
+          // await initTelemetryInstance({ response })
         }
       } catch (error) {
         log.error({ error, message: 'Error initing the telemetry instance', slack: 'operations' })

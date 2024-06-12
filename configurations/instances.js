@@ -9,7 +9,8 @@ exports.instances = [
         "name": "aliajs",
         "language": "javascript",
         "tier": "production",
-        "type": "express",
+        "type": "javascript",
+        "remote_repository": "https://github.com/jdecaron/aliajs.git",
         "setup": {
           "initial": [
             { command: "npm install -g @bitwarden/cli", target: "new" },
