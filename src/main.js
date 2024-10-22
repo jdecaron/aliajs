@@ -1,26 +1,63 @@
-const dotenv = require('dotenv').config()
-const crypto = require('crypto')
+const dotenv = require('dotenv')
+dotenv.config()
 
-const { serve } =  require('@hono/node-server')
-const { Hono } = require('hono')
-const routes = require('./routes')
+require('./items')
 
-const app = new Hono()
+const debug = require('debug')('aliajs')
+const http = require('http')
+const app = require('./app')
 
-app.use(async (context, next) => {
-  const authorization = context.req.header('Authorization')
-  if (typeof authorization === 'string' && crypto.timingSafeEqual(Buffer.from(process.env.ALIAJS_AUTHORIZATION), Buffer.from(authorization))) {
-    await next()
-  } else {
-    return context.json({}, 404)
+const port = normalizePort(process.env.PORT || '3000')
+app.set('port', port)
+
+const server = http.createServer(app)
+
+server.listen(port)
+server.on('error', onError)
+server.on('listening', onListening)
+server.setTimeout(500000)
+
+
+function normalizePort (val) {
+  const normalizedPort = parseInt(val, 10)
+
+  if (isNaN(normalizedPort)) {
+    return val
   }
-})
 
-app.route('/', routes)
+  if (normalizedPort >= 0) {
+    return normalizedPort
+  }
 
-console.log(`Server is running on port ${process.env.PORT}`)
+  return false
+}
 
-serve({
-  fetch: app.fetch,
-  port: process.env.PORT,
-})
+function onError (error) {
+  if (error.syscall !== 'listen') {
+    throw error
+  }
+
+  const bind = typeof port === 'string'
+    ? `Pipe ${port}`
+    : `Port ${port}`
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(`${bind} requires elevated privileges`)
+      process.exit(1)
+    case 'EADDRINUSE':
+      console.error(`${bind} is already in use`)
+      process.exit(1)
+    default:
+      throw error
+  }
+}
+
+function onListening () {
+  const addr = server.address()
+  const bind = typeof addr === 'string'
+    ? `pipe ${addr}`
+    : `port ${addr.port}`
+  debug(`Listening on ${bind}`)
+}
