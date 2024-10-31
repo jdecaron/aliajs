@@ -130,13 +130,13 @@ function validate() {
 }
 
 try {
-  restore()
-  // exports.items.operations = exports.getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
+  // restore()
+  exports.items.operations = exports.getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
   exports.items.operations.variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))
-  // exports.items.development = exports.getItems({ variables: exports.items.operations.variables[1] })
-  // exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
-  // backup({ data: JSON.stringify(exports.items) })
-  console.log(exports.items)
+  exports.items.development = exports.getItems({ variables: exports.items.operations.variables[1] })
+  exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
+  backup({ data: JSON.stringify(exports.items) })
+  // console.log(exports.items)
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
 
