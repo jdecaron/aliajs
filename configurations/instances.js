@@ -14,7 +14,7 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "npm install -g @bitwarden/cli", target: "new" },
-            { command: "sudo ln -s $HOME/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
+            { command: "sudo ln -f -s $HOME/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
             { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>.pem\" > ~/.ssh/config", target: "new" },
             { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ~/.ssh/<%= aliajs_key_name %>.pem ubuntu@<%= address %>:.ssh/<%= aliajs_key_name %>.pem", target: "orchestrator" },
           ]
