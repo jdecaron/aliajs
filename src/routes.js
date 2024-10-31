@@ -1,7 +1,7 @@
 const log = require('./logger')(__filename)
 
 const express = require('express')
-const { initInstances, sauce } = require('./new-instance')
+const { initInstances } = require('./new-instance')
 const utils = require('./utils')
 const { instances } = require('../configurations/instances')
 
@@ -14,7 +14,7 @@ router.get('/new-instance', async (request, response) => {
     if (typeof replace === 'string' && replace.match(/^true$/i)) {
       replace = true
     }
-    await initInstances({ address, checkout, instances: [utils.instance({ instances, instance_name })], replace, response })
+    await initInstances({ address, instances: [utils.instance({ instances, instance_name })], replace, response })
   } catch (error) {
     log.error({ error, message: `Error creating new instance ${instance_name}`, slack: 'operations' })
     response.write(`\x1b[31m${error}\x1b[0m\n`)

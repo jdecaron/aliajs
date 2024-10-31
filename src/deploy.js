@@ -103,7 +103,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-exports.javascript  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
+exports.express  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
     checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {
@@ -187,10 +187,10 @@ exports.javascript  = async function ({ address, checkout, domain, exec, home, i
   const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
   fs.writeFileSync(`${temp}/custom`, custom)
 
-  await exec({ command: `rsync -az ${temp}/ ${user}@${address}:${unique_service_name}` })
-  await ssh.new({ command: `sudo mv -f ${unique_service_name}/nginx /etc/nginx/sites-enabled/${service.name}-${service.tier}` })
-  await ssh.new({ command: `sudo mv -f ${unique_service_name}/custom /etc/nginx/conf.d/custom.conf` })
-  await ssh.new({ command: `sudo mv ${unique_service_name}/service /etc/systemd/system/${unique_service_name}.service` })
+  await exec({ command: `rsync -az ${temp}/ ${user}@${address}:${home}/${unique_service_name}` })
+  await ssh.new({ command: `sudo mv -f ${home}/${unique_service_name}/nginx /etc/nginx/sites-enabled/${service.name}-${service.tier}` })
+  await ssh.new({ command: `sudo mv -f ${home}/${unique_service_name}/custom /etc/nginx/conf.d/custom.conf` })
+  await ssh.new({ command: `sudo mv ${home}/${unique_service_name}/service /etc/systemd/system/${unique_service_name}.service` })
 
   if (initial) {
     await ssh.new({ command: `echo '127.0.0.1 ${server_name}' | sudo tee -a /etc/hosts` })
@@ -225,7 +225,7 @@ exports.javascript  = async function ({ address, checkout, domain, exec, home, i
   })
 
   if (service.name === 'aliajs') {
-    await ssh.new({ command: `echo \"0 5 * * 0 cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/cli/renew-certificates.js > renew-certificates.log 2>&1\n0 6 * * * cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/src/new-image.js > new-image.log 2>&1\n30 8 * * * cd ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name} && /usr/bin/node ${process.env.ALIAJS_DEFAULT_PATH}/${unique_service_name}/src/refresh.js > refresh.log 2>&1\" >> aliajs_cron; crontab aliajs_cron; rm aliajs_cron` })
+    await ssh.new({ command: `echo \"0 5 * * 0 cd ${home}/${unique_service_name} && /usr/bin/node ${home}/${unique_service_name}/cli/renew-certificates.js > renew-certificates.log 2>&1\n0 6 * * * cd ${home}/${unique_service_name} && /usr/bin/node ${home}/${unique_service_name}/src/new-image.js > new-image.log 2>&1\n30 8 * * * cd ${home}/${unique_service_name} && /usr/bin/node ${home}/${unique_service_name}/src/refresh.js > refresh.log 2>&1\" >> aliajs_cron; crontab aliajs_cron; rm aliajs_cron` })
   }
 
   for (let i = 0; i < services.length; i++) {

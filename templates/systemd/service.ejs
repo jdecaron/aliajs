@@ -1,0 +1,29 @@
+[Unit]
+Description=<%= unique_service_name %>
+
+[Service]
+Type=simple
+ExecStart=<%= run %> <%= home %>/<%= unique_service_name %><%= main %>
+WorkingDirectory=<%= home %>/<%= unique_service_name %>/
+
+User=<%= user %>
+Group=<%= user %>
+
+<% if (typeof variables === 'string' &&  variables.length > 0) { -%>
+<%- variables %>
+<% } -%>
+Environment=PORT=<%= port %>
+
+# Allow many incoming connections
+LimitNOFILE=infinity
+
+# Allow core dumps for debugging
+LimitCORE=infinity
+
+StandardInput=null
+StandardOutput=syslog
+StandardError=syslog
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
