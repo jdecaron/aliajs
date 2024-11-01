@@ -194,7 +194,7 @@ exports.express  = async function ({ address, checkout, domain, exec, home, init
 
   if (initial) {
     await ssh.new({ command: `echo '127.0.0.1 ${server_name}' | sudo tee -a /etc/hosts` })
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
   }
   await setup({ data: { instance, unique_service_name }, exec, service, ssh, type: 'post-build' })
 
