@@ -15,7 +15,7 @@ const { getItems, getNotes, items } = require('./items')
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
 
-exports.nginx = async function ({ address, checkout, domain, exec, initial, instance, service, ssh, user }) {
+exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations } = service
 
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
@@ -71,6 +71,9 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   if (domain === undefined) {
     domain = process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
   }
+  if (home === undefined) {
+    home = process.env.ALIAJS_DEFAULT_PATH
+  }
   if (user === undefined) {
     user = process.env.ALIAJS_DEFAULT_USER
   }
@@ -96,7 +99,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, inst
   await ssh.new({ command: `sudo cp -f ${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
