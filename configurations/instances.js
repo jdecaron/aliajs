@@ -32,15 +32,11 @@ exports.instances = [
         "name": "champignonniere",
         "tier": "production",
         "type": "nginx",
+        "template": "frappe",
         "domains": [
           "champignonniere-production.rotat.io",
         ],
-        "locations": [
-          {
-            "location": "/",
-            "proxy_pass": "http://127.0.0.1:8000/",
-          },
-        ],
+        "locations": [],
         "setup": {
           "initial": [
             { command: "sudo apt-get update", target: "new" },

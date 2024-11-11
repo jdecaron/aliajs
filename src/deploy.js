@@ -85,8 +85,12 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   }
 
   await exec({ command: `mkdir ${temp}/sync/sites-enabled` })
+  let template = 'server'
+  if (service.template) {
+    template = service.template
+  }
   for (let domain of domains) {
-    const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, server_name: domain, uniqueBuilds })
+    const config = await renderFile(`${__dirname}/../templates/nginx/${template}.ejs`, { locations, home, server_name: domain, uniqueBuilds })
     fs.writeFileSync(`${temp}/sync/sites-enabled/${domain}`, config)
   }
 
