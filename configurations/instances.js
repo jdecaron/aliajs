@@ -57,6 +57,12 @@ exports.instances = [
             { command: "sudo supervisorctl reload", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench get-app erpnext", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench --site champignonniere-production.rotat.io install-app erpnext", target: "new" },
+            { command: "mkdir <%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups || true", target: "current" },
+            { command: "cd <%= home %>/frappe-bench && bench --site champignonniere-production.rotat.io backup --backup-path-db <%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups/database.sql.gz --compress", target: "current" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups/database.sql.gz <%= temp %>/database.sql.gz", target: "orchestrator" },
+            { command: "mkdir <%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups || true", target: "new" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sql.gz ubuntu@<%= address %>:<%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups/database.sql.gz", target: "orchestrator" },
+            { command: `cd <%= home %>/frappe-bench && bench --site champignonniere-production.rotat.io restore <%= home %>/frappe-bench/sites/champignonniere-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
           ]
         }
       }
