@@ -63,6 +63,7 @@ ec2.describeImages(info.params.describeImages).promise()
       }
       const { Instances } = await ec2.runInstances(info.params.runInstances).promise()
       const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: [Instances[0].InstanceId] }).promise()
+      // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0477b63509011a7d5'] }).promise()
       info.Instance = Reservations[0].Instances[0]
       await ec2.waitFor('systemStatusOk', { InstanceIds: [info.Instance.InstanceId] }).promise()
 

@@ -84,14 +84,8 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-  // const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
-  const Reservations = [{
-    Instances: [{
-      InstanceId: 'i-026a76033797db14e',
-      PrivateIpAddress: '172.31.2.115',
-      PublicIpAddress: '15.157.29.183',
-    }],
-  }]
+  const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
+  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0477b63509011a7d5'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
