@@ -123,8 +123,8 @@ exports.install = async function ({ path, major, ssh, user }) {
 
 exports.installNode = ({ path, latestNode, major }) => {
   return [
-    `curl https://nodejs.org/download/release/latest-v${major}.x/${latestNode.file} > ${path}/${latestNode.file}`,
-    `cd ${path}; echo "${latestNode.checksum}  ${latestNode.file}" | sha256sum -c`,
+    `cd ${path} && curl -L -O https://nodejs.org/download/release/latest-v${major}.x/${latestNode.file}`,
+    `cd ${path} && echo "${latestNode.checksum} ${latestNode.file}" | sha256sum -c`,
     `mkdir ${path}/opt || true`,
     `tar -xf ${path}/${latestNode.file} -C ${path}/opt`,
   ]
