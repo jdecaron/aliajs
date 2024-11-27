@@ -85,7 +85,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
   const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
-  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0477b63509011a7d5'] }).promise()
+  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0be3a4fea1f64d081'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
@@ -176,6 +176,8 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
         PublicIp: instance.address,
       }).promise()
 
+      // TODO add instance to headscale
+
       // !!!!!!!! Code below this line is not guaranteed to run on aliajs
       // since the code below is terminating instances. aliajs could
       // be terminated (shutdown) before it can finish this for loop.
@@ -188,6 +190,7 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
           for (let m = 0; m < runningInstanceTags.length; m++) {
             const runningInstanceTag = runningInstanceTags[m]
             if (runningInstanceTag.Key === 'Name' && runningInstanceTag.Value === instance.name) {
+              // TODO try removing instance from headscale
               await ec2.terminateInstances({
                 InstanceIds: [
                   runningInstance.InstanceId,
