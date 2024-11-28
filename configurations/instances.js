@@ -4,7 +4,6 @@ exports.instances = [
   {
     "name": "champignonniere-production",
     "address": "35.183.159.96",
-    // "imageName": "aliajs-node-18-ami",
     "type": "t3a.medium",
     "services": [
       {
@@ -48,7 +47,6 @@ exports.instances = [
   {
     "name": "headscale-production",
     "address": "35.182.87.59",
-    // "imageName": "aliajs-node-18-ami",
     "type": "t2.nano",
     "services": [
       {
@@ -79,6 +77,32 @@ exports.instances = [
             { command: "sudo systemctl start headscale", target: "new" },
           ]
         }
+      },
+    ]
+  },
+  {
+    "name": "telemetry-production",
+    "type": "t2.nano",
+    "services": [
+      {
+        "name": "prometheus",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "prometheus-production.rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "proxy_pass": "http://127.0.0.1:9090",
+          },
+        ],
+        "setup": {
+          "initial": [
+            { command: "sudo snap install prometheus-alertmanager", target: "new" },
+            { command: "sudo snap install prometheus", target: "new" },
+          ],
+        },
       },
     ]
   },

@@ -90,6 +90,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
 
   const ssh = {
     current: SSH({ address: instance.address, keyName, response }),
+    headscale: SSH({ address: 'headscale-production.rotat.io', keyName, response }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, response }),
   }
 
@@ -145,6 +146,15 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
     })
   }
 
+  let preauthKey = await ssh.headscale({ command: `sudo headscale preauthkeys create -u aliajs --reusable -o json` })
+  preauthKey = JSON.parse(preauthKey)
+  await ssh.new({ command: `sudo tailscale up --login-server https://headscale-production.rotat.io --hostname ${instance.name} --authkey ${preauthKey.key}` })
+  try {
+    await ssh.current({ command: `sudo tailscale down` })
+  } catch (error) {
+    log.error({ error, message: 'Error: Could not remove current node ${instance.name} from tailscale mesh', slack: 'operations' })
+  }
+
   return Reservations
 }
 
@@ -171,12 +181,12 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
         log.error({ error, message: 'Error initing the telemetry instance', slack: 'operations' })
       }
 
-      await ec2.associateAddress({
-        InstanceId: Reservations[0].Instances[0].InstanceId,
-        PublicIp: instance.address,
-      }).promise()
-
-      // TODO add instance to headscale
+      if (typeof instance.address === 'string') {
+        await ec2.associateAddress({
+          InstanceId: Reservations[0].Instances[0].InstanceId,
+          PublicIp: instance.address,
+        }).promise()
+      }
 
       // !!!!!!!! Code below this line is not guaranteed to run on aliajs
       // since the code below is terminating instances. aliajs could
