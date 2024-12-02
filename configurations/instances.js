@@ -7,6 +7,13 @@ exports.instances = [
     "type": "t3a.medium",
     "services": [
       {
+        // https://frappeframework.com/docs/user/en/bench/reference/new-site
+        // https://frappeframework.com/docs/user/en/production-setup
+        // https://frappeframework.com/docs/user/en/bench/guides/setup-production
+        // https://frappeframework.com/docs/user/en/installation
+        // https://frappeframework.com/docs/user/en/tutorial/install-and-setup-bench
+        // https://frappeframework.com/docs/user/en/basics/sites#site-config
+        // https://frappeframework.com/docs/user/en/bench/reference/restore
         "name": "champignonniere",
         "tier": "production",
         "type": "nginx",
