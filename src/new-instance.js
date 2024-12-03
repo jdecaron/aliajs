@@ -146,14 +146,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
     })
   }
 
-  let preauthKey = await ssh.headscale({ command: `sudo headscale preauthkeys create -u aliajs --reusable -o json` })
-  preauthKey = JSON.parse(preauthKey)
-  await ssh.new({ command: `sudo tailscale up --login-server https://headscale-production.rotat.io --hostname ${instance.name} --authkey ${preauthKey.key}` })
-  try {
-    await ssh.current({ command: `sudo tailscale down` })
-  } catch (error) {
-    log.error({ error, message: 'Error: Could not remove current node ${instance.name} from tailscale mesh', slack: 'operations' })
-  }
+  await setHeadscaleInstance({ instance, name, response, ssh })
 
   return Reservations
 }
@@ -168,24 +161,15 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
     const Reservations = await exports.initInstance({ address, instance, response, temp })
 
     if (replace === true) {
-      try {
-        if (i === instances.length - 1) {
-          // This setTimeout is a temporary solution to the associateAddress
-          // above that returns before the instance has its new network interface
-          // fully fonctionnal. Otherwise there will be issues with the ssh commands
-          // during the initTelemetryInstance process.
-          // await (new Promise((resolve) => { setTimeout(resolve, 300000) }))
-          // await initTelemetryInstance({ response })
-        }
-      } catch (error) {
-        log.error({ error, message: 'Error initing the telemetry instance', slack: 'operations' })
-      }
-
       if (typeof instance.address === 'string') {
         await ec2.associateAddress({
           InstanceId: Reservations[0].Instances[0].InstanceId,
           PublicIp: instance.address,
         }).promise()
+      }
+
+      if (i === instances.length - 1) {
+        await setTelemetryInstance({ response })
       }
 
       // !!!!!!!! Code below this line is not guaranteed to run on aliajs
@@ -214,33 +198,55 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
   }
 }
 
-async function initTelemetryInstance ({ response }) {
-  const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
-  const remoteInstances = (await ec2.describeInstances().promise()).Reservations
-
-  for (const instance of configurations.instances) {
-    for (const remoteInstance of remoteInstances) {
-      if (instance.address === remoteInstance.Instances[0].PublicIpAddress) {
-        instance.privateIpAddress = remoteInstance.Instances[0].PrivateIpAddress
+async function setHeadscaleInstance ({ instance, name, response, ssh }) {
+  let preauthKey = await ssh.headscale({ command: `sudo headscale preauthkeys create -u aliajs --reusable -o json` })
+  preauthKey = JSON.parse(preauthKey)
+  try {
+    let nodes = await ssh.headscale({ command: `sudo headscale nodes list -o json` })
+    nodes = JSON.parse(nodes)
+    for (let i = 0; i < nodes.length; i++) {
+      console.log(nodes[i].name, name)
+      if (nodes[i].name === name) {
+        await ssh.headscale({ command: `sudo headscale nodes delete --force -i ${nodes[i].id}` })
       }
     }
+  } catch (error) {
+    log.error({ error, message: 'Error: Could not remove current node ${instance.name} from tailscale mesh', slack: 'operations' })
   }
-
-  const prometheusConfig = await renderFile(`${__dirname}/../templates/prometheus/prometheus.ejs`, { instances: configurations.instances })
-  fs.writeFileSync(`${temp}/prometheus.yml`, prometheusConfig)
-  await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
-  await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
-
-  const address = ''
-  const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
-  const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
-  const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
-  await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${address}:${remoteTemp}` })
-  await ssh({ command: `sudo cp ${remoteTemp}/prometheus.yml /var/snap/prometheus/current/prometheus.yml` })
-  await ssh({ command: `sudo cp ${remoteTemp}/alerts.yml /var/snap/prometheus/current/alerts.yml` })
-  await ssh({ command: `sudo cp ${remoteTemp}/alertmanager.yml /var/snap/prometheus-alertmanager/current/alertmanager.yml` })
-  await ssh({ command: `sudo service snap.prometheus.prometheus restart` })
-  await ssh({ command: `sudo service snap.prometheus-alertmanager.alertmanager restart` })
+  await ssh.new({ command: `sudo tailscale up --login-server https://headscale-production.rotat.io --hostname ${instance.name} --authkey ${preauthKey.key}` })
 }
 
-exports.initTelemetryInstance = initTelemetryInstance
+async function setTelemetryInstance ({ response }) {
+  try {
+    const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
+    const remoteInstances = (await ec2.describeInstances().promise()).Reservations
+
+    for (const instance of configurations.instances) {
+      for (const remoteInstance of remoteInstances) {
+        if (instance.address === remoteInstance.Instances[0].PublicIpAddress) {
+          instance.privateIpAddress = remoteInstance.Instances[0].PrivateIpAddress
+        }
+      }
+    }
+
+    const prometheusConfig = await renderFile(`${__dirname}/../templates/prometheus/prometheus.ejs`, { instances: configurations.instances })
+    fs.writeFileSync(`${temp}/prometheus.yml`, prometheusConfig)
+    await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
+    await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
+
+    const address = 'prometheus-production.rotat.io'
+    const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
+    const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
+    const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
+    await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${address}:${remoteTemp}` })
+    await ssh({ command: `sudo cp ${remoteTemp}/prometheus.yml /var/snap/prometheus/current/prometheus.yml` })
+    await ssh({ command: `sudo cp ${remoteTemp}/alerts.yml /var/snap/prometheus/current/alerts.yml` })
+    await ssh({ command: `sudo cp ${remoteTemp}/alertmanager.yml /var/snap/prometheus-alertmanager/current/alertmanager.yml` })
+    await ssh({ command: `sudo service snap.prometheus.prometheus restart` })
+    await ssh({ command: `sudo service snap.prometheus-alertmanager.alertmanager restart` })
+  } catch (error) {
+    log.error({ error, message: 'Error initing the telemetry instance', slack: 'operations' })
+  }
+}
+
+exports.setTelemetryInstance = setTelemetryInstance
