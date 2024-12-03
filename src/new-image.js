@@ -45,9 +45,7 @@ ec2.describeImages(info.params.describeImages).promise()
         KeyName: process.env.ALIAJS_KEY_NAME,
         MaxCount: 1,
         MinCount: 1,
-        SecurityGroupIds: [
-          process.env.AWS_DEFAULT_SECURITY_GROUP_ID,
-        ],
+        SecurityGroupIds: ['sg-a6cc0cca', 'sg-03a9b9a03dab1f335'],
         SubnetId: process.env.AWS_DEFAULT_SUBNET_ID,
         TagSpecifications: [
           {

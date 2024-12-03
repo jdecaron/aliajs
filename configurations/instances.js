@@ -5,6 +5,7 @@ exports.instances = [
     "name": "champignonniere-production",
     "address": "35.183.159.96",
     "type": "t3a.medium",
+    "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
         // https://frappeframework.com/docs/user/en/bench/reference/new-site
@@ -55,6 +56,7 @@ exports.instances = [
     "name": "headscale-production",
     "address": "35.182.87.59",
     "type": "t2.nano",
+    "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
         "name": "headscale",
@@ -120,6 +122,7 @@ exports.instances = [
     "address": "15.157.29.183",
     // "imageName": "aliajs-node-18-ami",
     "type": "t2.micro",
+    "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
         "name": "aliajs",

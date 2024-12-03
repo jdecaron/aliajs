@@ -18,7 +18,12 @@ AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 const info = { params: {} }
 const ec2 = new AWS.EC2()
 
-exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
+exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
+  let SecurityGroupIds = ['sg-a6cc0cca', 'sg-03a9b9a03dab1f335']
+  if (typeof instance.additionalSecurityGroups === 'object' && instance.additionalSecurityGroups.length > 0) {
+    SecurityGroupIds.concat(instance.additionalSecurityGroups)
+  }
+
   info.params.describeImages = {
     Filters: [
       {
@@ -37,9 +42,7 @@ exports.newInstance = async ({ address, imageName, keyName, name, type }) => {
         KeyName: keyName,
         MaxCount: 1,
         MinCount: 1,
-        SecurityGroupIds: [
-          process.env.AWS_DEFAULT_SECURITY_GROUP_ID,
-        ],
+        SecurityGroupIds,
         SubnetId: process.env.AWS_DEFAULT_SUBNET_ID,
         TagSpecifications: [
           {
@@ -84,7 +87,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-  const { Reservations } = await exports.newInstance({ address, imageName, keyName, name, type })
+  const { Reservations } = await exports.newInstance({ address, imageName, keyName, instance, name, type })
   // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0be3a4fea1f64d081'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
