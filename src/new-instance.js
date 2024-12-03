@@ -21,7 +21,7 @@ const ec2 = new AWS.EC2()
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   let SecurityGroupIds = ['sg-a6cc0cca', 'sg-03a9b9a03dab1f335']
   if (typeof instance.additionalSecurityGroups === 'object' && instance.additionalSecurityGroups.length > 0) {
-    SecurityGroupIds.concat(instance.additionalSecurityGroups)
+    SecurityGroupIds = SecurityGroupIds.concat(instance.additionalSecurityGroups)
   }
 
   info.params.describeImages = {
