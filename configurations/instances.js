@@ -63,7 +63,7 @@ exports.instances = [
         "tier": "production",
         "type": "nginx",
         "domains": [
-          "headscale-production.rotat.io",
+          `${process.env.ALIAJS_DEFAULT_HEADSCALE_DOMAIN}`,
         ],
         "locations": [
           {
@@ -76,8 +76,6 @@ exports.instances = [
             { command: "sudo apt-get install sqlite3", target: "new" },
             { command: "cd <%= home %> && curl -L -O https://github.com/juanfont/headscale/releases/download/v0.23.0/headscale_0.23.0_linux_amd64.deb", target: "new" },
             { command: "cd <%= home %> && sudo dpkg -i headscale_0.23.0_linux_amd64.deb", target: "new" },
-            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ./templates/headscale/headscale.ejs ubuntu@<%= address %>:<%= home %>/headscale.ejs", target: "orchestrator" },
-            { command: "sudo mv <%= home %>/headscale.ejs /etc/headscale/config.yaml", target: "new" },
             { command: `cd <%= home %> && sudo sqlite3 /var/lib/headscale/db.sqlite ".backup 'db.sqlite'"`, target: "current" },
             { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/db.sqlite <%= temp %>/db.sqlite", target: "orchestrator" },
             { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/db.sqlite ubuntu@<%= address %>:<%= home %>/db.sqlite", target: "orchestrator" },
@@ -93,6 +91,12 @@ exports.instances = [
     "name": "telemetry-production",
     "address": "3.97.235.183",
     "type": "t2.nano",
+    "headscaleDNS": { // dns.extra_records
+      "value": undefined,
+      "domains": [
+        "prometheus-production.rotat.io",
+      ],
+    },
     "services": [
       {
         // https://prometheus-production.rotat.io/graph?g0.range_input=24h&g0.stacked=0&g0.expr=100%20-%20(avg%20by(instance)%20(rate(node_cpu_seconds_total%7Bmode%3D%22idle%22%7D%5B2m%5D))%20*%20100)&g0.tab=0&g1.range_input=24h&g1.stacked=0&g1.expr=node_memory_MemAvailable_bytes%20%2F%20node_memory_MemTotal_bytes%20*%20100&g1.tab=0&g2.range_input=24h&g2.expr=sum%20by%20(instance)%20(rate(node_network_receive_bytes_total%5B2m%5D))%20%2F%201024%20%2F%201024&g2.tab=0&g3.range_input=24h&g3.expr=sum%20by%20(instance)%20(rate(node_network_transmit_bytes_total%5B2m%5D))%20%2F%201024%20%2F%201024&g3.tab=0&g4.range_input=24h&g4.expr=sum%20by%20(instance)%20(rate(node_disk_read_bytes_total%5B2m%5D))%20%2F%201024%20%2F%201024&g4.tab=0&g5.range_input=24h&g5.expr=sum%20by%20(instance)%20(rate(node_disk_written_bytes_total%5B2m%5D))%20%2F%201024%20%2F%201024&g5.tab=0&g6.range_input=24h&g6.expr=(node_filesystem_avail_bytes%20*%20100)%20%2F%20node_filesystem_size_bytes&g6.tab=0

@@ -88,12 +88,12 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
   const { Reservations } = await exports.newInstance({ address, imageName, keyName, instance, name, type })
-  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0be3a4fea1f64d081'] }).promise()
+  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0ed9816992ffbbb9a'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
     current: SSH({ address: instance.address, keyName, response }),
-    headscale: SSH({ address: 'headscale-production.rotat.io', keyName, response }),
+    headscale: SSH({ address: process.env.ALIAJS_DEFAULT_HEADSCALE_DOMAIN, keyName, response }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, response }),
   }
 
@@ -149,7 +149,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
     })
   }
 
-  await setHeadscaleInstance({ instance, name, response, ssh })
+  await setHeadscaleInstance({ instance, name, response, ssh, temp })
 
   return Reservations
 }
@@ -201,22 +201,64 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
   }
 }
 
-async function setHeadscaleInstance ({ instance, name, response, ssh }) {
+async function setHeadscaleInstance ({ instance, name, response, ssh, temp }) {
   let preauthKey = await ssh.headscale({ command: `sudo headscale preauthkeys create -u aliajs --reusable -o json` })
   preauthKey = JSON.parse(preauthKey)
+  let nodes = await ssh.headscale({ command: `sudo headscale nodes list -o json` })
+  nodes = JSON.parse(nodes)
+
   try {
-    let nodes = await ssh.headscale({ command: `sudo headscale nodes list -o json` })
-    nodes = JSON.parse(nodes)
     for (let i = 0; i < nodes.length; i++) {
-      console.log(nodes[i].name, name)
       if (nodes[i].name === name) {
         await ssh.headscale({ command: `sudo headscale nodes delete --force -i ${nodes[i].id}` })
       }
     }
   } catch (error) {
-    log.error({ error, message: 'Error: Could not remove current node ${instance.name} from tailscale mesh', slack: 'operations' })
+    log.error({ error, message: `Error: Could not remove current node ${instance.name} from tailscale mesh`, slack: 'operations' })
   }
-  await ssh.new({ command: `sudo tailscale up --login-server https://headscale-production.rotat.io --hostname ${instance.name} --authkey ${preauthKey.key}` })
+
+  let extra_records = []
+  try {
+    const headscaleDNSInstances = {}
+    for (let i = 0; i < configurations.instances.length; i++) {
+      if (configurations.instances[i].headscaleDNS) {
+        headscaleDNSInstances[configurations.instances[i].name] = configurations.instances[i]
+      }
+    }
+    const headscaleDNSNodes = {}
+    for (let i = 0; i < nodes.length; i++) {
+      console.log(typeof headscaleDNSInstances[nodes[i].name], nodes[i].name, headscaleDNSInstances[nodes[i].name])
+      if (typeof headscaleDNSInstances[nodes[i].name] === 'object') {
+        headscaleDNSInstances[nodes[i].name].headscaleDNS.value = nodes[i].ip_addresses[0]
+        headscaleDNSNodes[nodes[i].name] = headscaleDNSInstances[nodes[i].name]
+      }
+    }
+
+    for (const name in headscaleDNSInstances) {
+      if (Object.hasOwn(headscaleDNSInstances, name)) {
+        if (headscaleDNSInstances[name].headscaleDNS.value === undefined) {
+          log.error({ error, message: `Error: headscaleDNS: instance ${name} has no headscale private IP address assigned`, slack: 'operations' })
+        } else {
+          for (const domain of headscaleDNSInstances[name].headscaleDNS.domains) {
+            extra_records.push({ name: domain, type: 'A', value: headscaleDNSInstances[name].headscaleDNS.value })
+          }
+        }
+      }
+    }
+    extra_records = JSON.stringify(extra_records)
+
+    const headscaleConfig = await renderFile(`${__dirname}/../templates/headscale/headscale.ejs`, { headscale_domain: process.env.ALIAJS_DEFAULT_HEADSCALE_DOMAIN, extra_records })
+    fs.writeFileSync(`${temp}/headscale.yml`, headscaleConfig)
+
+    const remoteTemp = (await ssh.headscale({ command: `mktemp -d` })).replace(/\s$/, '')
+    await exec({ command: `rsync -az ${temp}/headscale.yml ${process.env.ALIAJS_DEFAULT_USER}@${process.env.ALIAJS_DEFAULT_HEADSCALE_DOMAIN}:${remoteTemp}` })
+    await ssh.headscale({ command: `sudo cp ${remoteTemp}/headscale.yml /etc/headscale/config.yaml` })
+    await ssh.headscale({ command: `sudo service headscale restart` })
+  } catch (error) {
+    log.error({ error, message: 'Error: Could not create the headscale config file', slack: 'operations' })
+  }
+
+  await ssh.new({ command: `sudo tailscale up --login-server https://${process.env.ALIAJS_DEFAULT_HEADSCALE_DOMAIN} --hostname ${instance.name} --authkey ${preauthKey.key}` })
 }
 
 async function setTelemetryInstance ({ response }) {
