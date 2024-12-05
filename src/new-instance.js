@@ -279,7 +279,7 @@ async function setTelemetryInstance ({ response }) {
     await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
     await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
 
-    const address = 'prometheus-production.rotat.io'
+    const address = '3.97.235.183'
     const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
     const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
     const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
