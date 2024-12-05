@@ -5,7 +5,7 @@ const log = require('./logger')(__filename)
 
 const retry = require('async-retry')
 const dns = require('dns')
-const ejs = require('ejs')
+const ejs = require('ejs') // eta (0 dependencies) seems a good replacement for ejs
 const fs = require('fs')
 const https = require('https')
 const fetch = require('node-fetch')
