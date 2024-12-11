@@ -15,11 +15,5 @@ server {
   client_max_body_size 8m;
   add_header Strict-Transport-Security max-age=500;
 
-  location /health-check-ae8dffc6-9c2e-4f68-9b42-192d072ca1e1 {
-    access_log off;
-    add_header 'Content-Type' 'application/json';
-    return 200 '{"status":"OK"}';
-  }
-
   <%- include('locations', { locations }); %>
 }
