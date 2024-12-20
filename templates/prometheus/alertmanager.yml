@@ -1,0 +1,13 @@
+global:
+  slack_api_url: ''
+
+route:
+  receiver: 'slack'
+
+receivers:
+- name: 'slack'
+  slack_configs:
+  - channel: '#operations'
+    send_resolved: true
+    title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+    text: "<!channel> {{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"

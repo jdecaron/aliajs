@@ -1,0 +1,19 @@
+server {
+  listen         80;
+  server_name    <%= server_name %>;
+  server_tokens  off;
+  return         301 https://$server_name$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  ssl_certificate    /etc/ssl/certs/<%= server_name %>.pem;
+  ssl_certificate_key     /etc/ssl/private/<%= server_name %>.pem;
+  server_name <%= server_name %>;
+  server_tokens off;
+
+  client_max_body_size 8m;
+  add_header Strict-Transport-Security max-age=500;
+
+  <%- include('locations', { locations }); %>
+}

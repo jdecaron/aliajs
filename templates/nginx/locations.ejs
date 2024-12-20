@@ -1,0 +1,54 @@
+<%_ for (const location of locations) { _%>
+  location <%= location.location %> {
+<%_ if (typeof location.proxy_pass === 'string') { _%>
+    add_header X-Frame-Options DENY;
+    proxy_buffering off;
+    proxy_pass <%= location.proxy_pass %>;
+    <%_ if (typeof location.proxy_read_timeout === 'string') { _%>
+    proxy_read_timeout <%= location.proxy_read_timeout %>;
+    <%_ } _%>
+    proxy_redirect off;
+    proxy_set_header Connection $http_connection;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header X-Real-IP $remote_addr ;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for ;
+    proxy_set_header X-Forwarded-Proto https;
+    proxy_ssl_server_name on;
+<%_ } else if (typeof location.alias === 'string') { _%>
+    add_header Cache-Control no-cache;
+    add_header X-Frame-Options DENY;
+    default_type text/html;
+    set $ab "0";
+    access_by_lua_block {
+      local builds = {
+<%_ for (let key in uniqueBuilds) { _%>
+        <%- `["${key}"] = "${uniqueBuilds[key]}",` %>
+<%_ } _%>
+      }
+      local ck = require "cookie"
+      local cookie, err = ck:new()
+      local ab_cookie, err = cookie:get("ab_3df6332d")
+      if not ab_cookie then
+        local random = math.random(100)
+        local splits = { <% for (let i = 0; i < location.split.length; i++) { %> { "<%= location.split[i].buildIndex %>", <%= location.split[i].split %> }, <% } %> }
+        ab_cookie = splits[1][1]
+        for i, split in ipairs(splits) do
+          if split[2] >= random then
+            ab_cookie = split[1]
+          end
+        end
+        local ok, err = cookie:set({
+          key = "ab_3df6332d", value = ab_cookie, path = "/", secure = true, httponly = true,
+        })
+      end
+      if builds[ab_cookie] == nil then
+        ngx.var.ab = builds["default"]
+      else
+        ngx.var.ab = ab_cookie
+      end
+    }
+    alias <%= location.alias %>;
+    try_files $uri /index.html =404;
+<%_ } _%>
+  }
+<%_ } _%>
