@@ -9,19 +9,19 @@ Atwood's Law:
 
 AliaJS: Atwood's Law Infrastructure as JavaScript
 
-If you or your team care about JavaScript then maybe AliaJS is a solution for your infrastructure orchestration.
+If you or your team care about JavaScript, then maybe AliaJS is a solution for your infrastructure orchestration.
 
-AliaJS is to [NodeJS](https://nodejs.org/en) as [Capistrano](https://capistranorb.com) is to [Ruby on Rails](https://rubyonrails.org).
+AliaJS is to [Node.js](https://nodejs.org/en) as [Capistrano](https://capistranorb.com) is to [Ruby on Rails](https://rubyonrails.org).
 
 ## What AliaJS is:
-- Infrastructure orchestrator designed for small operation-infrastructure team that want to use JavaScript as their definition & execution language.
-- Designed with architecture and code simplicity. AliaJS takes HTTP as an input & can talk HTTP as a first class citizen. It's a Express.js service that runs shell command & NodeJS code.
-- All in one solution to manage the service infrastructure, including the secret vault integration, monitoring & alterting.
-- NGINX oriented.
+- Infrastructure orchestrator designed for small operation-infrastructure teams that want to use JavaScript as their definition & execution language.
+- Designed with architecture and code simplicity. AliaJS takes HTTP as an input & can talk HTTP as a first-class citizen. It's an Express.js service that runs shell commands & Node.js code.
+- All-in-one solution to manage the service infrastructure, including the secret vault integration, monitoring & alerting.
+- NGINX-oriented.
 
 # What AliaJS is not:
 - Tool for big operation-infrastructure teams.
-- Project thas is well supported by a cummunity.
+- Project that is well supported by a community.
 - Something that is perfect, AliaJS is aligned with the [wabi-sabi ](https://en.wikipedia.org/wiki/Wabi-sabi) way.
 
 ## Architecture
