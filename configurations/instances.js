@@ -75,8 +75,8 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get install sqlite3", target: "new" },
-            { command: "cd <%= home %> && curl -L -O https://github.com/juanfont/headscale/releases/download/v0.23.0/headscale_0.23.0_linux_amd64.deb", target: "new" },
-            { command: "cd <%= home %> && sudo dpkg -i headscale_0.23.0_linux_amd64.deb", target: "new" },
+            { command: "cd <%= home %> && curl -L -O https://github.com/juanfont/headscale/releases/download/v0.25.1/headscale_0.25.1_linux_amd64.deb", target: "new" },
+            { command: "cd <%= home %> && sudo dpkg -i headscale_0.25.1_linux_amd64.deb", target: "new" },
             { command: `cd <%= home %> && sudo sqlite3 /var/lib/headscale/db.sqlite ".backup 'db.sqlite'"`, target: "current" },
             { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/db.sqlite <%= temp %>/db.sqlite", target: "orchestrator" },
             { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/db.sqlite ubuntu@<%= address %>:<%= home %>/db.sqlite", target: "orchestrator" },
