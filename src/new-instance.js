@@ -242,7 +242,7 @@ async function setHeadscaleInstance ({ instance, name, response, ssh, temp }) {
     for (const name in headscaleDNSInstances) {
       if (Object.hasOwn(headscaleDNSInstances, name)) {
         if (headscaleDNSInstances[name].headscaleDNS.value === undefined) {
-          log.error({ error, message: `Error: headscaleDNS: instance ${name} has no headscale private IP address assigned`, channel: 'operations' })
+          log.error({ error: Error(`headscaleDNS: instance ${name} has no headscale private IP address assigned`), channel: 'operations' })
         } else {
           for (const domain of headscaleDNSInstances[name].headscaleDNS.domains) {
             extra_records.push({ name: domain, type: 'A', value: headscaleDNSInstances[name].headscaleDNS.value })
