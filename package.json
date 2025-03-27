@@ -1,6 +1,9 @@
 {
   "name": "aliajs",
   "version": "0.0.1",
+  "engines": {
+    "node": "<=18"
+  },
   "scripts": {
     "dev": "node --watch-path=./src ./src/main.js"
   },
