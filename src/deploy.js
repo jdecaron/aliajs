@@ -222,7 +222,12 @@ exports.express  = async function ({ address, checkout, domain, exec, home, init
     const response = await fetch(`https://${server_name}/404-uc3C6`, {
       agent: new https.Agent({
         lookup: function(hostname, options, callback) {
-          callback(null, [{ address, family: 4 }])
+          // https://github.com/nodejs/node/issues/55762#issuecomment-2597780391
+          // node <= 18
+          // callback(err, address, family);
+          // node > 18
+          // callback(err, [{address, family}]);
+          callback(undefined, address, 4)
         }
       })
     })
