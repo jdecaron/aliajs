@@ -1,3 +1,3 @@
 exports.domains = [
-  { "host": "aliajs-production.rotat.io", "mode": "dns", "domains": [ "rotat.io", "*.rotat.io" ] },
+  { "host": "rotat.io", "mode": "dns", "domains": [ "rotat.io", "*.rotat.io" ] },
 ]
