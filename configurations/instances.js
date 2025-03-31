@@ -26,8 +26,8 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get update", target: "new" },
-            { command: "sudo apt-get -y install git python-is-python3 python3-dev python3-pip redis-server", target: "new" },
-            { command: "sudo apt-get -y install mariadb-server mariadb-client", target: "new" },
+            { command: "sudo apt-get -y install git python-is-python3 python3-dev python3-pip redis-server pkg-config", target: "new" },
+            { command: "sudo apt-get -y install mariadb-server mariadb-client libmariadb-dev", target: "new" },
             { command: `sudo mysqladmin --user=root password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
             { command: "sudo apt-get -y install supervisor", target: "new" },
             { command: "sudo apt-get -y install python3.12-venv", target: "new" },
