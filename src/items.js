@@ -145,13 +145,13 @@ try {
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
 
-  log.error({ error, message, syncF2f8844b: true, slack: 'operations' })
+  log.error({ error, message, syncF2f8844b: true, channel: 'operations' })
   throw Error(message)
   // Uncomment the restore() lines below only in case of a catastrophic event.
   // try {
   //   restore()
   // } catch (error) {
-  //   log.error({ error, message: 'Fatal error! Could not get the sauce. Followed by a critical error: Could not restore the sauce. Process will exit in 1600 milliseconds.', slack: 'operations' })
+  //   log.error({ error, message: 'Fatal error! Could not get the sauce. Followed by a critical error: Could not restore the sauce. Process will exit in 1600 milliseconds.', channel: 'operations' })
   //   process.exit(1)
   // }
 }
