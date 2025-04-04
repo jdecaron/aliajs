@@ -149,7 +149,11 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
     })
   }
 
-  await setHeadscaleInstance({ instance, name, response, ssh, temp })
+  try {
+    await setHeadscaleInstance({ instance, name, response, ssh, temp })
+  } catch (error) {
+    log.error({ error, message: `Error: Could not set Headscale instance for instance ${name}`, channel: 'operations' })
+  }
 
   return Reservations
 }

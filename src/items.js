@@ -1,3 +1,5 @@
+const dotenv = require('dotenv')
+
 const child_process = require('child_process')
 const crypto = require('crypto')
 const fs = require('fs')
@@ -129,6 +131,15 @@ function validate() {
   }
 }
 
+function variables() {
+  const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
+  for (let key in parsed) {
+    if (process.env[key] === '') {
+      process.env[key] = exports.getItem({ items: exports.items.operations, name: key }).notes
+    }
+  }
+}
+
 try {
   // Development items
   // restore()
@@ -142,6 +153,8 @@ try {
   exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
   backup({ data: JSON.stringify(exports.items) })
   // console.log(exports.items)
+
+  variables()
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
 
