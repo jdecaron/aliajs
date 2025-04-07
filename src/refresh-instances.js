@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const log = require('./logger')(__filename)
 
-const { initInstances, initTelemetryInstance } = require('./new-instance')
+const { initInstances, setTelemetryInstance } = require('./new-instance')
 const { SSH } = require('./utils')
 const { domains } = require('../configurations/domains')
 const { instances } = require('../configurations/instances')
@@ -22,7 +22,7 @@ async function refreshInstances() {
     await initInstances({ domains, instances, replace: true })
   } catch (error) {
     log.error({ error, message: 'Error refreshing instances', channel: 'operations' })
-    await initTelemetryInstance({})
+    await setTelemetryInstance({})
   }
 }
 refreshInstances()
