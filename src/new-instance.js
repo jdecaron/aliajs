@@ -179,7 +179,7 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
         // This setTimeout is a temporary solution to the associateAddress
         // above that returns before the instance has its new network interface
         // fully fonctionnal. Otherwise there will be issues with the ssh commands
-        // during the initTelemetryInstance process.
+        // during the setTelemetryInstance process.
         await (new Promise((resolve) => { setTimeout(resolve, 5000) }))
         await setTelemetryInstance({ response })
       }

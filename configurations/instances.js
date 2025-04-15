@@ -4,7 +4,7 @@ exports.instances = [
   {
     "name": "champignonniere-production",
     "address": "35.183.159.96",
-    "type": "t3a.medium",
+    "type": "t3a.small",
     "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
@@ -74,7 +74,7 @@ exports.instances = [
         ],
         "setup": {
           "initial": [
-            { command: "sudo apt-get install sqlite3", target: "new" },
+            { command: "sudo apt-get -y install sqlite3", target: "new" },
             { command: "cd <%= home %> && curl -L -O https://github.com/juanfont/headscale/releases/download/v0.25.1/headscale_0.25.1_linux_amd64.deb", target: "new" },
             { command: "cd <%= home %> && sudo dpkg -i headscale_0.25.1_linux_amd64.deb", target: "new" },
             { command: `cd <%= home %> && sudo sqlite3 /var/lib/headscale/db.sqlite ".backup 'db.sqlite'"`, target: "current" },
