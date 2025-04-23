@@ -1,9 +1,5 @@
 # AliaJS
 
-> **Warning**
->
-> This project is in early alpha.
-
 Atwood's Law:
 > “Any application that can be written in JavaScript, will eventually be written in JavaScript.” - [Jeff Atwood](https://blog.codinghorror.com/about-me/)
 
@@ -27,15 +23,15 @@ AliaJS is to [Node.js](https://nodejs.org/en) as [Capistrano](https://capistrano
 ## Architecture
 [./src/app.js](./src/app.js), [./src/main.js](./src/main.js) & [./src/routes.js](./src/routes.js): Main Express.js files that define the server.
 
-[./src/deploy.js](./src/deploy.js): Update a service that is up and running.  
-[./src/new-image.js](./src/new-image.js): Create & keep updated the EC2 virtual machines according to the scheduled job (104 lines).  
-[./src/new-instance.js](./src/new-instance.js): Create new instances according to its definition in [./configurations/instances.js](./configurations/instances.js) (302 lines).  
-[./src/renew-certificates.js](./src/renew-certificates.js): Create & keep updated the SSL certificates (46 lines).  
+[./src/deploy.js](./src/deploy.js): Update a service that is up and running.
+[./src/new-image.js](./src/new-image.js): Create & keep updated the EC2 virtual machines according to the scheduled job (104 lines).
+[./src/new-instance.js](./src/new-instance.js): Create new instances according to its definition in [./configurations/instances.js](./configurations/instances.js) (302 lines).
+[./src/renew-certificates.js](./src/renew-certificates.js): Create & keep updated the SSL certificates (46 lines).
 
-[./src/items.js](./src/items.js), vault management utils.js(152 lines).  
+[./src/items.js](./src/items.js), vault management utils.js(152 lines).
 [./src/logger.js](./src/logger.js), [utils.js](utils.js): Util code used by the project (200 lines).
 
-[./templates](./templates): Where the EJS templates files are.  
+[./templates](./templates): Where the EJS templates files are.
 [./configurations](./configurations): Where the instance & image configuration definitions are.
 
 ## Getting started
