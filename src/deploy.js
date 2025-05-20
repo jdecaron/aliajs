@@ -97,10 +97,10 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
   fs.writeFileSync(`${temp}/sync/custom.conf`, custom)
 
-  await exec({ command: `rsync -az ${temp}/sync/ ${user}@${address}:${unique}` })
-  await exec({ command: `rsync -az ${staticBuilds} ${user}@${address}:` })
-  await ssh.new({ command: `sudo mv -f ${unique}/custom.conf /etc/nginx/conf.d/` })
-  await ssh.new({ command: `sudo cp -f ${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
+  await exec({ command: `rsync -az ${temp}/sync/ ${user}@${address}:${home}/${unique}` })
+  await exec({ command: `rsync -az ${staticBuilds} ${user}@${address}:${home}` })
+  await ssh.new({ command: `sudo mv -f ${home}/${unique}/custom.conf /etc/nginx/conf.d/` })
+  await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
     await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
