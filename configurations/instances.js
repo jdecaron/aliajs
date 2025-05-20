@@ -2,11 +2,42 @@ const { getItem, items } = require('../src/items')
 
 exports.instances = [
   {
+    "name": "aliajs-demo",
+    "address": "35.182.87.59",
+    "type": "t3a.small",
+    "services": [
+      {
+        "name": "aliajs-demo-backend",
+        "language": "typescript",
+        "tier": "production",
+        "type": "nodejs",
+        "remote_repository": "https://github.com/jdecaron/aliajs-demo-backend.git",
+      },
+      {
+        "name": "aliajs-demo-frontend",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "aliajs-demo-frontend-production.rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "build": "aliajs-demo-frontend",
+          },
+          {
+            "location": "/backend/",
+            "proxy_pass": "https://aliajs-demo-backend-production.rotat.io/",
+          },
+        ],
+        "remote_repository": "https://github.com/jdecaron/aliajs-demo-frontend.git",
+      }
+    ]
+  },
+  {
     "name": "aliajs-production",
     "address": "15.157.29.183",
-    // "imageName": "aliajs-node-18-ami",
     "type": "t2.micro",
-    "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
         "name": "aliajs",

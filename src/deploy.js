@@ -34,7 +34,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   })
 
   if (builds.length > 0) {
-    await exec({ command: `git clone ${remote_repository}/${builds[0].build}.git ${repository}`})
+    await exec({ command: `git clone ${remote_repository} ${repository}`})
 
     if (checkout === undefined || checkout === '') {
       checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
@@ -110,7 +110,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-exports.express  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
+exports.nodejs  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
     checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {
@@ -258,7 +258,7 @@ function command({ data, service, type }) {
       run: '/usr/bin/node',
     },
     typescript: {
-      build: 'npm run tsc',
+      build: 'npm run build',
       main: '/dist/main',
       packages: 'npm --production=false install',
       run: '/usr/bin/node',
@@ -277,7 +277,7 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
   const buildIndex = (await exec({ command: `cd ${repository} && git rev-parse --verify HEAD` })).replace(/\s$/, '')
   if (fs.existsSync(`${staticBuilds}/${buildIndex}`) === false) {
     await exec({ command: `cd ${repository} && npm --production=false install` })
-    await exec({ command: `cd ${repository} && npm run build:${service.tier}` })
+    await exec({ command: `cd ${repository} && npm run build` })
     fs.writeFileSync(`${repository}/dist/build.json`, JSON.stringify(build))
     await exec({ command: `mv ${repository}/dist ${staticBuilds}/${buildIndex}` })
     await exec({ command: `rm -rf ${repository}/node_modules ${repository}/package-lock.json` })

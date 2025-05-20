@@ -19,10 +19,7 @@ const info = { params: {} }
 const ec2 = new AWS.EC2()
 
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
-  let SecurityGroupIds = ['sg-a6cc0cca', 'sg-03a9b9a03dab1f335']
-  if (typeof instance.additionalSecurityGroups === 'object' && instance.additionalSecurityGroups.length > 0) {
-    SecurityGroupIds = SecurityGroupIds.concat(instance.additionalSecurityGroups)
-  }
+  let SecurityGroupIds = ['sg-a6cc0cca', 'sg-03a9b9a03dab1f335', 'sg-014419c2799d52b95']
 
   info.params.describeImages = {
     Filters: [
@@ -88,7 +85,7 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
   const { Reservations } = await exports.newInstance({ address, imageName, keyName, instance, name, type })
-  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0ed9816992ffbbb9a'] }).promise()
+  // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0bb05f291bb32cda9'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
@@ -102,16 +99,6 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
       await ssh.new({ command: `echo '${getNotes({ items: items.operations, name })}' >> ~/.ssh/authorized_keys`})
     }
   }
-
-  const filebeatConfig = await renderFile(`${__dirname}/../templates/elk/filebeat.yml`, {})
-  fs.writeFileSync(`${temp}/filebeat.yml`, filebeatConfig)
-  const remoteTemp = (await ssh.new({ command: `mktemp -d` })).replace(/\s$/, '')
-  await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${Reservations[0].Instances[0].PublicIpAddress}:${remoteTemp}` })
-  await ssh.new({ command: `sudo mv ${remoteTemp}/filebeat.yml /etc/filebeat/filebeat.yml`})
-  await ssh.new({ command: 'sudo chown root:root /etc/filebeat/filebeat.yml' })
-  await ssh.new({ command: 'sudo chmod 600 /etc/filebeat/filebeat.yml' })
-  await ssh.new({ command: 'sudo service filebeat start' })
-  await ssh.new({ command: 'sudo systemctl enable filebeat' })
 
   for (let j = 0; j < services.length; j++) {
     const service = services[j]
@@ -168,15 +155,6 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
         }).promise()
       }
 
-      if (i === instances.length - 1) {
-        // This setTimeout is a temporary solution to the associateAddress
-        // above that returns before the instance has its new network interface
-        // fully fonctionnal. Otherwise there will be issues with the ssh commands
-        // during the setTelemetryInstance process.
-        await (new Promise((resolve) => { setTimeout(resolve, 5000) }))
-        await setTelemetryInstance({ response })
-      }
-
       // !!!!!!!! Code below this line is not guaranteed to run on aliajs
       // since the code below is terminating instances. aliajs could
       // be terminated (shutdown) before it can finish this for loop.
@@ -201,38 +179,3 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
     }
   }
 }
-
-async function setTelemetryInstance ({ response }) {
-  try {
-    const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
-    const remoteInstances = (await ec2.describeInstances().promise()).Reservations
-
-    for (const instance of configurations.instances) {
-      for (const remoteInstance of remoteInstances) {
-        if (instance.address === remoteInstance.Instances[0].PublicIpAddress) {
-          instance.privateIpAddress = remoteInstance.Instances[0].PrivateIpAddress
-        }
-      }
-    }
-
-    const prometheusConfig = await renderFile(`${__dirname}/../templates/prometheus/prometheus.ejs`, { instances: configurations.instances })
-    fs.writeFileSync(`${temp}/prometheus.yml`, prometheusConfig)
-    await exec({ command: `cp ${__dirname}/../templates/prometheus/alerts.yml ${temp}/` })
-    await exec({ command: `cp ${__dirname}/../templates/prometheus/alertmanager.yml ${temp}/` })
-
-    const address = '3.97.235.183'
-    const ssh = SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response })
-    const hostname = (await ssh({ command: `hostname` })).replace(/\s$/, '')
-    const remoteTemp = (await ssh({ command: `mktemp -d` })).replace(/\s$/, '')
-    await exec({ command: `rsync -az ${temp}/ ${process.env.ALIAJS_DEFAULT_USER}@${address}:${remoteTemp}` })
-    await ssh({ command: `sudo cp ${remoteTemp}/prometheus.yml /var/snap/prometheus/current/prometheus.yml` })
-    await ssh({ command: `sudo cp ${remoteTemp}/alerts.yml /var/snap/prometheus/current/alerts.yml` })
-    await ssh({ command: `sudo cp ${remoteTemp}/alertmanager.yml /var/snap/prometheus-alertmanager/current/alertmanager.yml` })
-    await ssh({ command: `sudo service snap.prometheus.prometheus restart` })
-    await ssh({ command: `sudo service snap.prometheus-alertmanager.alertmanager restart` })
-  } catch (error) {
-    log.error({ error, message: 'Error initing the telemetry instance', channel: 'operations' })
-  }
-}
-
-exports.setTelemetryInstance = setTelemetryInstance

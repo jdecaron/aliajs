@@ -31,24 +31,6 @@ exports.getDomain = ({ domain }) => {
   return `${split[split.length - 2]}.${split[split.length - 1]}`
 }
 
-exports.getLatestFilebeat = () => {
-  // Elastic.co is the sole Filebeat publisher for now, they broke the Filebeat compatibility
-  // with OpenSearch. For this reason, Filebeat is pinned to 7-12-1. See these two links
-  // for more details about the breaking changes:
-  // https://www.reddit.com/r/aws/comments/nn95aq/elastic_has_broken_filebeat_as_of_713_it_no/
-  // https://github.com/elastic/beats/issues/25865
-
-  // For the full OpenSearch compatibility matrix for Beats:
-  // https://opensearch.org/docs/latest/clients/agents-and-ingestion-tools/index/#compatibility-matrix-for-beats
-
-
-  // return fetch(`https://api.github.com/repos/elastic/beats/releases/latest`)
-  //   .then(result => result.json())
-  //   .then(result => result.tag_name.match(/\d+\.\d+\.\d+/)[0])
-
-  return Promise.resolve('oss-7.12.1')
-}
-
 exports.getLatestNode = ({ major }) => {
   return fetch(`https://nodejs.org/download/release/latest-v${major}.x/SHASUMS256.txt`)
     .then(result => result.text())
@@ -96,17 +78,12 @@ exports.install = async function ({ path, major, ssh, user }) {
   await ssh({ command: `echo 'LineMax=1M' | sudo tee -a /etc/systemd/journald.conf` })
   await ssh({ command: `echo '$MaxMessageSize 64k' | sudo tee -a /etc/rsyslog.conf` })
 
-  const latestFilebeat = await exports.getLatestFilebeat()
-  await ssh({ command: `curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${latestFilebeat}-amd64.deb` })
-  await ssh({ command: `sudo dpkg -i filebeat-${latestFilebeat}-amd64.deb` })
-
   await ssh({ command: 'sudo apt-get update' })
   await ssh({ command: 'sudo apt-get -y install nginx' })
   await ssh({ command: 'sudo apt-get -y install libnginx-mod-http-lua' })
   await ssh({ command: 'sudo apt-get -y install lua-nginx-cookie' })
   await ssh({ command: 'sudo rm /etc/nginx/sites-enabled/default' })
   await ssh({ command: 'sudo ln /usr/share/nginx/modules-available/mod-http-lua.conf /usr/share/nginx/modules-enabled' })
-  await ssh({ command: 'sudo apt-get -y install prometheus-node-exporter' })
 
   const latestNode = await exports.getLatestNode({ major })
   for (const command of exports.installNode({ path, latestNode, major })) {
