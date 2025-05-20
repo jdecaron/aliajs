@@ -11,6 +11,12 @@ exports.instances = [
         "language": "typescript",
         "tier": "production",
         "type": "nodejs",
+        "setup": {
+          "initial": [
+            { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "redis-cli get test", target: "new" },
+          ],
+        },
         "remote_repository": "https://github.com/jdecaron/aliajs-demo-backend.git",
       },
       {
