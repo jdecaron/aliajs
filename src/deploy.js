@@ -11,9 +11,47 @@ const https = require('https')
 const fetch = require('node-fetch')
 const util = require('util')
 const { getItems, getNotes, items } = require('./items')
+const { SSH } = require('./utils')
 
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
+
+exports.redis = async function ({ address, exec, initial, home, instance, service, ssh }) {
+  if (initial) {
+    await setup({
+      data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance },
+      exec,
+      service,
+      ssh,
+      type: 'initial'
+    })
+  }
+
+  ssh.demo = SSH({ address: '35.182.87.59', keyName: process.env.ALIAJS_KEY_NAME })
+  let privateIpAddress = JSON.parse(await ssh.demo({ command: `ip --json address show` }))
+  privateIpAddress = privateIpAddress[1].addr_info[0].local
+
+  await ssh.new({ command: `redis-cli replicaof ${privateIpAddress} 6379` })
+
+  // Retry until master_sync_in_progress:0 && master_link_status:up
+  await retry(async () => {
+    const replication = await ssh.new({ command: `redis-cli info replication` })
+
+    if (!replication.match(new RegExp('master_link_status:up'))) {
+      throw Error('redis replication master_link_status:down')
+    }
+
+    if (!replication.match(new RegExp('master_sync_in_progress:0'))) {
+      throw Error('redis replication master_sync_in_progress:1')
+    }
+  })
+
+  await fetch(`https://demo.rotat.io/api/v0/update-client-2?host=${instance.privateIpAddress}`)
+  await fetch(`https://demo.rotat.io/api/v0//quit-client-1`)
+
+  await ssh.demo({ command: 'sudo service redis-server stop' })
+  await ssh.new({ command: `redis-cli replicaof no one` })
+}
 
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service

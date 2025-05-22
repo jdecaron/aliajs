@@ -2,6 +2,29 @@ const { getItem, items } = require('../src/items')
 
 exports.instances = [
   {
+    "name": "redis-demo",
+    "address": "3.97.235.183",
+    "type": "t3a.small",
+    "services": [
+      {
+        "name": "redis-replication-demo",
+        "tier": "production",
+        "type": "redis",
+        "setup": {
+          "initial": [
+            { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "sudo sed -i 's/^bind 127.0.0.1 -::1$/bind * -::*/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo sed -i 's/^protected-mode yes$/protected-mode no/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo sed -i 's/^replica-read-only yes$/replica-read-only no/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo systemctl daemon-reload", target: "new" },
+            { command: "sudo service redis-server restart", target: "new" },
+            { command: "redis-cli get test", target: "new" },
+          ],
+        },
+      },
+    ]
+  },
+  {
     "name": "aliajs-demo",
     "address": "35.182.87.59",
     "type": "t3a.small",
@@ -14,6 +37,10 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "sudo sed -i 's/^bind 127.0.0.1 -::1$/bind * -::*/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo sed -i 's/^protected-mode yes$/protected-mode no/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo systemctl daemon-reload", target: "new" },
+            { command: "sudo service redis-server restart", target: "new" },
             { command: "redis-cli get test", target: "new" },
           ],
         },
@@ -25,14 +52,16 @@ exports.instances = [
         "type": "nginx",
         "domains": [
           "aliajs-demo-frontend-production.rotat.io",
+          "demo.rotat.io",
         ],
         "locations": [
           {
             "location": "/",
             "build": "aliajs-demo-frontend",
+            "split": [ { "checkout": "main", "split": 90 }, { "checkout": "split-b", "split": 10 } ],
           },
           {
-            "location": "/backend/",
+            "location": "/api/v0/",
             "proxy_pass": "https://aliajs-demo-backend-production.rotat.io/",
           },
         ],
