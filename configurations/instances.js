@@ -13,6 +13,8 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "sudo sed -i 's/^bind 127.0.0.1 -::1$/bind * -::*/g' /etc/redis/redis.conf", target: "new" },
+            { command: "sudo sed -i 's/^protected-mode yes$/protected-mode no/g' /etc/redis/redis.conf", target: "new" },
             { command: "sudo sed -i 's/^replica-read-only yes$/replica-read-only no/g' /etc/redis/redis.conf", target: "new" },
             { command: "sudo systemctl daemon-reload", target: "new" },
             { command: "sudo service redis-server restart", target: "new" },
