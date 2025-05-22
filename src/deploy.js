@@ -33,7 +33,7 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
 
   await ssh.new({ command: `redis-cli replicaof ${privateIpAddress} 6379` })
 
-  await fetch(`https://aliajs-demo-backend-production.rotat.io/demo-update-client2?host=${privateIpAddress}`)
+  await fetch(`https://aliajs-demo-backend-production.rotat.io/demo-update-client2?host=${instance.privateIpAddress}`)
 
   // Retry until master_sync_in_progress:0
   await retry(async () => {
