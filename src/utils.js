@@ -93,8 +93,6 @@ exports.install = async function ({ path, major, ssh, user }) {
   await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npm /usr/bin/npm` })
   await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npx /usr/bin/npx` })
 
-  await ssh({ command: 'curl -fsSL https://tailscale.com/install.sh | sh' })
-
   await ssh({ command: 'sudo unattended-upgrade -d' })
 }
 
