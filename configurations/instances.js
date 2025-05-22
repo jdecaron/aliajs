@@ -2,6 +2,24 @@ const { getItem, items } = require('../src/items')
 
 exports.instances = [
   {
+    "name": "redis-demo",
+    "address": "3.97.235.183",
+    "type": "t3a.small",
+    "services": [
+      {
+        "name": "redis-replication-demo",
+        "tier": "production",
+        "type": "redis",
+        "setup": {
+          "initial": [
+            { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "redis-cli get test", target: "new" },
+          ],
+        },
+      },
+    ]
+  },
+  {
     "name": "aliajs-demo",
     "address": "35.182.87.59",
     "type": "t3a.small",
@@ -14,6 +32,10 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install redis", target: "new" },
+            { command: "sudo mv /etc/redis/redis.conf /etc/redis/redis.old.conf", target: "new" },
+            { command: "echo \"bind * -::*\nprotected-mode no\" > ~/redis.conf", target: "new" },
+            { command: "sudo mv ~/redis.conf /etc/redis/redis.conf", target: "new" },
+            { command: "sudo service redis-server restart", target: "new" },
             { command: "redis-cli get test", target: "new" },
           ],
         },

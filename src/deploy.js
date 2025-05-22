@@ -15,6 +15,12 @@ const { getItems, getNotes, items } = require('./items')
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
 
+exports.redis = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
+  if (initial) {
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance }, exec, service, ssh, type: 'initial' })
+  }
+}
+
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
 
