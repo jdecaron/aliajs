@@ -35,6 +35,7 @@ exports.instances = [
             { command: "sudo mv /etc/redis/redis.conf /etc/redis/redis.old.conf", target: "new" },
             { command: "echo \"bind * -::*\nprotected-mode no\" > ~/redis.conf", target: "new" },
             { command: "sudo mv ~/redis.conf /etc/redis/redis.conf", target: "new" },
+            { command: "sudo systemctl daemon-reload", target: "new" },
             { command: "sudo service redis-server restart", target: "new" },
             { command: "redis-cli get test", target: "new" },
           ],
