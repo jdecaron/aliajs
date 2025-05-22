@@ -11,14 +11,22 @@ const https = require('https')
 const fetch = require('node-fetch')
 const util = require('util')
 const { getItems, getNotes, items } = require('./items')
+const { SSH } = require('./utils')
 
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
 
 exports.redis = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
-  if (initial) {
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance }, exec, service, ssh, type: 'initial' })
-  }
+  // if (initial) {
+  //   await setup({
+  //     data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance }, exec, service, ssh, type: 'initial' })
+  // }
+
+  ssh.demo = SSH({ address: '35.182.87.59', keyName: process.env.ALIAJS_KEY_NAME })
+  let privateIpAddress = JSON.parse(await ssh.demo({ command: `ip --json address show` }))
+  privateIpAddress = privateIpAddress[1].addr_info[0].local
+  await ssh.new({ command: `redis-cli replicaof ${privateIpAddress} 6379` })
+  console.log(privateIpAddress)
 }
 
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
