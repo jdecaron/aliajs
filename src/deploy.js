@@ -33,7 +33,7 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
 
   await ssh.new({ command: `redis-cli replicaof ${privateIpAddress} 6379` })
 
-  await fetch(`https://demo.rotat.io/update-client-2?host=${instance.privateIpAddress}`)
+  await fetch(`https://aliajs-demo-backend-production.rotat.io/update-client-2?host=${instance.privateIpAddress}`)
 
   // Retry until master_sync_in_progress:0
   await retry(async () => {
@@ -43,7 +43,7 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
     }
   })
 
-  await fetch(`https://demo.rotat.io/quit-client1`)
+  await fetch(`https://aliajs-demo-backend-production.rotat.io/quit-client-1`)
 
   await ssh.demo({ command: 'sudo service redis-server stop' })
 }
