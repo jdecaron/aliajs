@@ -37,11 +37,11 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
   await retry(async () => {
     const replication = await ssh.new({ command: `redis-cli info replication` })
 
-    if (replication.match(new RegExp('^master_link_status:down$'))) {
+    if (!replication.match(new RegExp('master_link_status:up'))) {
       throw Error('redis replication master_link_status:down')
     }
 
-    if (replication.match(new RegExp('^master_sync_in_progress:1$'))) {
+    if (!replication.match(new RegExp('master_sync_in_progress:0'))) {
       throw Error('redis replication master_sync_in_progress:1')
     }
   })
@@ -51,6 +51,8 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
   await fetch(`https://demo.rotat.io/api/v0//quit-client-1`)
 
   await ssh.demo({ command: 'sudo service redis-server stop' })
+
+  await ssh.new({ command: `redis-cli replicaof no one` })
 }
 
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
