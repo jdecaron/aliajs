@@ -60,7 +60,7 @@ exports.instances = [
             "build": "aliajs-demo-frontend",
           },
           {
-            "location": "/backend/",
+            "location": "/api/",
             "proxy_pass": "https://aliajs-demo-backend-production.rotat.io/",
           },
         ],
