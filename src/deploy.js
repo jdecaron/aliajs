@@ -47,11 +47,9 @@ exports.redis = async function ({ address, exec, initial, home, instance, servic
   })
 
   await fetch(`https://demo.rotat.io/api/v0/update-client-2?host=${instance.privateIpAddress}`)
-
   await fetch(`https://demo.rotat.io/api/v0//quit-client-1`)
 
   await ssh.demo({ command: 'sudo service redis-server stop' })
-
   await ssh.new({ command: `redis-cli replicaof no one` })
 }
 
