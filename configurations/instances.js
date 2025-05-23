@@ -52,6 +52,7 @@ exports.instances = [
         "type": "nginx",
         "domains": [
           "aliajs-demo-frontend-production.rotat.io",
+          "demo.rotat.io",
         ],
         "locations": [
           {
