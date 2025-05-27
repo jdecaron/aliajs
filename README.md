@@ -1,5 +1,9 @@
 # AliaJS
 
+> **Warning**
+>
+> This project is in alpha.
+
 Atwood's Law:
 > “Any application that can be written in JavaScript, will eventually be written in JavaScript.” - [Jeff Atwood](https://blog.codinghorror.com/about-me/)
 
