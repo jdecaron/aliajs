@@ -78,7 +78,7 @@ exports.instances = [
         "name": "aliajs",
         "language": "javascript",
         "tier": "production",
-        "type": "express",
+        "type": "nodejs",
         "remote_repository": "https://github.com/jdecaron/aliajs.git",
         "setup": {
           "initial": [
