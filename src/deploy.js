@@ -15,6 +15,104 @@ const { getItems, getNotes, items } = require('./items')
 const lookup = util.promisify(dns.lookup)
 const renderFile = util.promisify(ejs.renderFile)
 
+exports.erpnext = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
+  // https://frappeframework.com/docs/user/en/bench/reference/new-site
+  // https://frappeframework.com/docs/user/en/production-setup
+  // https://frappeframework.com/docs/user/en/bench/guides/setup-production
+  // https://frappeframework.com/docs/user/en/installation
+  // https://frappeframework.com/docs/user/en/tutorial/install-and-setup-bench
+  // https://frappeframework.com/docs/user/en/basics/sites#site-config
+  // https://frappeframework.com/docs/user/en/bench/reference/restore
+  const { domains, locations, remote_repository } = service
+
+  const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
+  const repository = `${temp}/repository`
+  const staticBuilds = `${process.env.ALIAJS_DEFAULT_PATH}/static-builds-${service.tier}`
+  const unique = `${service.name}-${Date.now()}`
+  const uniqueBuilds = {}
+
+  await exec({ command: `mkdir ${repository} ${temp}/sync` })
+  if (fs.existsSync(`${staticBuilds}`) === false) {
+    await exec({ command: `mkdir ${staticBuilds}` })
+  }
+
+  const builds = locations.filter((location) => {
+    return typeof location.build === 'string'
+  })
+
+  if (builds.length > 0) {
+    await exec({ command: `git clone ${remote_repository} ${repository}`})
+
+    if (checkout === undefined || checkout === '') {
+      checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
+      try {
+        checkout = JSON.parse(await ssh.current({ command: `cat ${staticBuilds}/${service.name}-default.json` })).checkout
+      } catch (error) {
+        log.warn(`WARNING! could not parse build info from file, checkout value will be set to ${checkout} (it can be OK)`)
+      }
+    }
+
+    builds[0].checkout = checkout
+    if (typeof builds[0].split === 'object') {
+      builds[0].split[0].checkout = checkout
+    }
+
+    for (let i = 0; i < builds.length; i++) {
+      builds[i].alias = `${staticBuilds}/$ab/`
+      if (builds[i].split === undefined) {
+        builds[i].split = [{ checkout: builds[i].checkout, split: 100 }]
+      }
+
+      for (let j = 0; j < builds[i].split.length; j++) {
+        const buildIndex = await execBuild({ build: builds[i].split[j], exec, repository, service, staticBuilds })
+        builds[i].split[j].buildIndex = buildIndex
+        if (i === 0) {
+          uniqueBuilds['default'] = buildIndex
+          fs.writeFileSync(`${staticBuilds}/${service.name}-default.json`, JSON.stringify(builds[0].split[0]))
+        }
+        uniqueBuilds[buildIndex] = buildIndex
+      }
+    }
+  }
+
+  if (domain === undefined) {
+    domain = process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
+  }
+  if (home === undefined) {
+    home = process.env.ALIAJS_DEFAULT_PATH
+  }
+  if (user === undefined) {
+    user = process.env.ALIAJS_DEFAULT_USER
+  }
+
+  const server_name = `${service.name}-${service.tier}.${domain}`
+
+  if (address === undefined) {
+    address = (await lookup(server_name)).address
+  }
+
+  await exec({ command: `mkdir ${temp}/sync/sites-enabled` })
+  for (let domain of domains) {
+    const config = await renderFile(`${__dirname}/../templates/nginx/frappe.ejs`, { locations, home, server_name: domain, uniqueBuilds })
+    fs.writeFileSync(`${temp}/sync/sites-enabled/${domain}`, config)
+  }
+
+  const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
+  fs.writeFileSync(`${temp}/sync/custom.conf`, custom)
+
+  await exec({ command: `rsync -az ${temp}/sync/ ${user}@${address}:${home}/${unique}` })
+  await exec({ command: `rsync -az ${staticBuilds} ${user}@${address}:${home}` })
+  await ssh.new({ command: `sudo mv -f ${home}/${unique}/custom.conf /etc/nginx/conf.d/` })
+  await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
+
+  if (initial) {
+    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+  }
+
+  await ssh.new({ command: 'sudo nginx -t' })
+  await ssh.new({ command: 'sudo service nginx reload' })
+}
+
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
 
@@ -85,12 +183,8 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   }
 
   await exec({ command: `mkdir ${temp}/sync/sites-enabled` })
-  let template = 'server'
-  if (service.template) {
-    template = service.template
-  }
   for (let domain of domains) {
-    const config = await renderFile(`${__dirname}/../templates/nginx/${template}.ejs`, { locations, home, server_name: domain, uniqueBuilds })
+    const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, home, server_name: domain, uniqueBuilds })
     fs.writeFileSync(`${temp}/sync/sites-enabled/${domain}`, config)
   }
 
