@@ -105,20 +105,20 @@ exports.validations = {
 
 function backup({ data }) {
   const key = crypto.createHash('sha512').update(process.env.ALIAJS_VARIABLE_2).digest('hex').substring(0, 32)
-  const encryptionIV = crypto.createHash('sha512').update('').digest('hex').substring(0, 16)
+  const encryptionIV = crypto.randomBytes(16)
   const cipher = crypto.createCipheriv('aes-256-cbc', key, encryptionIV)
-  const final = `${cipher.update(data, 'utf8', 'hex')}${cipher.final('hex')}`
+  const final = `${encryptionIV.toString('hex')}:${cipher.update(data, 'utf8', 'hex')}${cipher.final('hex')}`
   fs.writeFileSync(`../.aliajs-sauce-backup-9f6e7ec1`, final)
   fs.writeFileSync(`../.aliajs-sauce-backup-9f6e7ec1-${Date.now()}`, final)
   validate()
 }
 
 function restore() {
-  const data = fs.readFileSync(`../.aliajs-sauce-backup-9f6e7ec1`).toString('utf8')
+  const data = fs.readFileSync(`../.aliajs-sauce-backup-9f6e7ec1`).toString('utf8').split(':')
   const key = crypto.createHash('sha512').update(process.env.ALIAJS_VARIABLE_2).digest('hex').substring(0, 32)
-  const encryptionIV = crypto.createHash('sha512').update('').digest('hex').substring(0, 16)
+  const encryptionIV = Buffer.from(data[0], 'hex')
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, encryptionIV)
-  const final = `${decipher.update(data, 'hex', 'utf8')}${decipher.final('utf8')}`
+  const final = `${decipher.update(data[1], 'hex', 'utf8')}${decipher.final('utf8')}`
   exports.items = JSON.parse(final)
   validate()
 }

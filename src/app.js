@@ -10,16 +10,17 @@ app.disable('x-powered-by')
 
 app.use(express.json({ limit: '5mb' }))
 app.use(express.urlencoded({ extended: false }))
-app.use('/', routes)
 
 app.use(async (request, response, next) => {
   const authorization = request.header('Authorization')
   if (typeof authorization === 'string' && crypto.timingSafeEqual(Buffer.from(process.env.ALIAJS_AUTHORIZATION), Buffer.from(authorization))) {
     await next()
   } else {
-    return response.json({}, 404)
+    return response.json({}, 400)
   }
 })
+
+app.use('/', routes)
 
 app.use((error, request, response, next) => {
   log.error({ error, request })
