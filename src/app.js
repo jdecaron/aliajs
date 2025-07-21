@@ -10,7 +10,6 @@ app.disable('x-powered-by')
 
 app.use(express.json({ limit: '5mb' }))
 app.use(express.urlencoded({ extended: false }))
-app.use('/', routes)
 
 app.use(async (request, response, next) => {
   const authorization = request.header('Authorization')
@@ -20,6 +19,8 @@ app.use(async (request, response, next) => {
     return response.json({}, 404)
   }
 })
+
+app.use('/', routes)
 
 app.use((error, request, response, next) => {
   log.error({ error, request })
