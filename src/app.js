@@ -16,7 +16,7 @@ app.use(async (request, response, next) => {
   if (typeof authorization === 'string' && crypto.timingSafeEqual(Buffer.from(process.env.ALIAJS_AUTHORIZATION), Buffer.from(authorization))) {
     await next()
   } else {
-    return response.json({}, 404)
+    return response.json({}, 400)
   }
 })
 
