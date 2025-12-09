@@ -47,14 +47,38 @@ exports.instances = [
     ]
   },
   {
+    "name": "n8n-production",
+    "address": "15.156.180.255",
+    "type": "t3a.small",
+    "services": [
+      {
+        "name": "n8n",
+        "tier": "production",
+        "language": "javascript",
+        "type": "nodejs",
+        "domains": [
+          "n8n-production.rotat.io",
+          "n8n.bainultra.dev",
+        ],
+        "remote_repository": "https://github.com/jdecaron/bainultra-n8n.git",
+        "setup": {
+          "initial": [
+            { command: "sudo apt-get -y install docker-compose", target: "new" },
+            { command: "cd <%= unique_service_name %>/n8n && sudo docker-compose up -d", target: "new" },
+          ]
+        }
+      }
+    ]
+  },
+  {
     "name": "aliajs-production",
     "address": "15.157.29.183",
     "type": "t2.micro",
     "services": [
       {
         "name": "aliajs",
-        "language": "javascript",
         "tier": "production",
+        "language": "javascript",
         "type": "nodejs",
         "remote_repository": "https://github.com/jdecaron/aliajs.git",
         "setup": {
