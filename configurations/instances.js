@@ -64,7 +64,7 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install docker-compose", target: "new" },
-            { command: "cd <%= unique_service_name %>/n8n && sudo docker-compose up -d", target: "new" },
+            { command: "cd <%= home %>/n8n && sudo docker-compose up -d", target: "new" },
           ]
         }
       }
