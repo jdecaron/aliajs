@@ -282,14 +282,20 @@ exports.nodejs  = async function ({ address, checkout, domain, exec, home, initi
     locations[0].proxy_read_timeout = '500s'
     fs.appendFileSync(`${temp}/.env`, `\nALIAJS_VARIABLE_0=${process.env.ALIAJS_VARIABLE_0}\nALIAJS_VARIABLE_1=${process.env.ALIAJS_VARIABLE_1}\nALIAJS_VARIABLE_2=${process.env.ALIAJS_VARIABLE_2}`)
   }
-  const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, server_name })
-  fs.writeFileSync(`${temp}/nginx`, config)
+
+  const domains = service.domains || [server_name]
+  await exec({ command: `mkdir ${temp}/sites-enabled` })
+  for (let domain of domains) {
+    const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, server_name: domain })
+    fs.writeFileSync(`${temp}/nginx`, config)
+    fs.writeFileSync(`${temp}/sites-enabled/${domain}`, config)
+  }
 
   const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
   fs.writeFileSync(`${temp}/custom`, custom)
 
   await exec({ command: `rsync -az ${temp}/ ${user}@${address}:${home}/${unique_service_name}` })
-  await ssh.new({ command: `sudo mv -f ${home}/${unique_service_name}/nginx /etc/nginx/sites-enabled/${service.name}-${service.tier}` })
+  await ssh.new({ command: `sudo cp -f ${home}/${unique_service_name}/sites-enabled/* /etc/nginx/sites-enabled/` })
   await ssh.new({ command: `sudo mv -f ${home}/${unique_service_name}/custom /etc/nginx/conf.d/custom.conf` })
   await ssh.new({ command: `sudo mv ${home}/${unique_service_name}/service /etc/systemd/system/${unique_service_name}.service` })
 

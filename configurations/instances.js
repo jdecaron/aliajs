@@ -48,7 +48,7 @@ exports.instances = [
   },
   {
     "name": "n8n-production",
-    "address": "15.156.180.255",
+    "address": "15.157.29.183",
     "type": "t3a.small",
     "services": [
       {
@@ -64,7 +64,7 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install docker-compose", target: "new" },
-            { command: "cd <%= home %>/n8n && sudo docker-compose up -d", target: "new" },
+            { command: "cd <%= home %>/<%= unique_service_name %>/n8n && sudo docker-compose up -d", target: "new" },
           ]
         }
       }
