@@ -52,14 +52,10 @@ exports.instances = [
     "type": "t3a.small",
     "services": [
       {
-        "name": "n8n",
+        "name": "n8n-docker",
         "tier": "production",
         "language": "javascript",
         "type": "nodejs",
-        "domains": [
-          "n8n-production.rotat.io",
-          "n8n.bainultra.dev",
-        ],
         "remote_repository": "https://github.com/jdecaron/bainultra-n8n.git",
         "setup": {
           "initial": [
@@ -67,6 +63,20 @@ exports.instances = [
             { command: "cd <%= home %>/<%= unique_service_name %>/n8n && sudo docker-compose up -d", target: "new" },
           ]
         }
+      },
+      {
+        "name": "n8n",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "n8n.bainultra.dev",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "proxy_pass": "http://127.0.0.1:5678",
+          },
+        ],
       }
     ]
   },

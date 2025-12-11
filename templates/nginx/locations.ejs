@@ -2,18 +2,22 @@
   location <%= location.location %> {
 <%_ if (typeof location.proxy_pass === 'string') { _%>
     add_header X-Frame-Options DENY;
+
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+
     proxy_buffering off;
     proxy_pass <%= location.proxy_pass %>;
-    <%_ if (typeof location.proxy_read_timeout === 'string') { _%>
-    proxy_read_timeout <%= location.proxy_read_timeout %>;
-    <%_ } _%>
     proxy_redirect off;
-    proxy_set_header Connection $http_connection;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header X-Real-IP $remote_addr ;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for ;
-    proxy_set_header X-Forwarded-Proto https;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_ssl_server_name on;
+    proxy_set_header Host $host;
+
+    proxy_read_timeout 86400;
+    proxy_send_timeout 86400;
 <%_ } else if (typeof location.alias === 'string') { _%>
     add_header Cache-Control no-cache;
     add_header X-Frame-Options DENY;
