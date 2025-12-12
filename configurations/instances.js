@@ -48,7 +48,7 @@ exports.instances = [
   },
   {
     "name": "n8n-production",
-    "address": "15.157.29.183",
+    "address": "15.156.180.255",
     "type": "t3a.small",
     "services": [
       {
@@ -60,7 +60,18 @@ exports.instances = [
         "setup": {
           "initial": [
             { command: "sudo apt-get -y install docker-compose", target: "new" },
+            { command: "ln -s -f <%= home %>/<%= unique_service_name %> <%= home %>/n8n", target: "new" },
             { command: "cd <%= home %>/<%= unique_service_name %>/n8n && sudo docker-compose up -d", target: "new" },
+            { command: "sudo docker cp n8n:/home/node/.n8n/database.sqlite <%= home %>/database.sqlite", target: "current" },
+            { command: "sudo docker cp n8n:/home/node/.n8n/config <%= home %>/config", target: "current" },
+            { command: "sudo chown $USER:$USER <%= home %>/config <%= home %>/database.sqlite", target: "current" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/config <%= temp %>/config", target: "orchestrator" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/database.sqlite <%= temp %>/database.sqlite", target: "orchestrator" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sqlite ubuntu@<%= address %>:<%= home %>/database.sqlite", target: "orchestrator" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/config ubuntu@<%= address %>:<%= home %>/config", target: "orchestrator" },
+            { command: "sudo docker cp <%= home %>/config n8n:/home/node/.n8n/", target: "new" },
+            { command: "sudo docker cp <%= home %>/database.sqlite n8n:/home/node/.n8n/", target: "new" },
+            { command: "cd <%= home %>/<%= unique_service_name %>/n8n && sudo docker-compose restart", target: "new" },
           ]
         }
       },
