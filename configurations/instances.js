@@ -8,6 +8,20 @@ exports.instances = [
     "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
+        "name": "bainultra-gateway",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "bainultra.dev",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "redirect": "https://github.com/BainUltra",
+          },
+        ]
+      },
+      {
         "name": "erpnext",
         "tier": "production",
         "type": "erpnext",

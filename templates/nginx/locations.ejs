@@ -53,6 +53,8 @@
     }
     alias <%= location.alias %>;
     try_files $uri /index.html =404;
+<%_ } else if (typeof location.redirect === 'string') { _%>
+    return 301 <%= location.redirect %>;
 <%_ } _%>
   }
 <%_ } _%>
