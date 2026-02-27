@@ -63,7 +63,7 @@ exports.instances = [
   {
     "name": "n8n-production",
     "address": "15.156.180.255",
-    "type": "t3a.small",
+    "type": "t3a.xlarge",
     "services": [
       {
         "name": "n8n-docker",
@@ -75,6 +75,8 @@ exports.instances = [
           "initial": [
             { command: "sudo apt-get -y install redis", target: "new" },
             { command: "sudo apt-get -y install webdis", target: "new" },
+            { command: "cd <%= home %>/<%= unique_service_name %> && redis-cli -x SET products < data/products.json", target: "new" },
+            { command: "cd <%= home %>/<%= unique_service_name %> && redis-cli -x SET options < data/options.json", target: "new" },
             { command: "sudo apt-get -y install docker-compose", target: "new" },
             { command: "ln -s -f <%= home %>/<%= unique_service_name %> <%= home %>/n8n", target: "new" },
             { command: "sudo docker cp n8n:/home/node/.n8n/database.sqlite <%= home %>/database.sqlite", target: "current" },
