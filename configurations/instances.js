@@ -22,6 +22,20 @@ exports.instances = [
         ]
       },
       {
+        "name": "rotatio-gateway",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "redirect": "https://erpnext-production.rotat.io/",
+          },
+        ]
+      },
+      {
         "name": "erpnext",
         "tier": "production",
         "type": "erpnext",
@@ -63,7 +77,7 @@ exports.instances = [
   {
     "name": "n8n-production",
     "address": "15.156.180.255",
-    "type": "t3a.xlarge",
+    "type": "t3a.small",
     "services": [
       {
         "name": "n8n-docker",
