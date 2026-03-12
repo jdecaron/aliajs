@@ -3,8 +3,8 @@ const { getItem, items } = require('../src/items')
 exports.instances = [
 {
   "name": "erpnext-production",
-    "address": "35.183.159.96",
-    "type": "t3a.small",
+    "address": "5.161.19.205",
+    "type": "cpx11",
     "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
@@ -115,6 +115,35 @@ exports.instances = [
           {
             "location": "/",
             "proxy_pass": "http://127.0.0.1:5678",
+          },
+        ],
+      }
+    ]
+  },
+  {
+    "name": "sauce-production",
+    "type": "t2.micro",
+    // "address": "2600:1f11:900:ec00::1",
+    // "type": {
+    //   "type": "flyio",
+    //   "memory_mb": 256,
+    //   "cpus": 1,
+    //   "cpu_kind": "shared",
+    //   "gpus": 0,
+    //   "region": "yyz",
+    // },
+    "services": [
+      {
+        "name": "sauce",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "sauce.rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "proxy_pass": "http://127.0.0.1:8000",
           },
         ],
       }

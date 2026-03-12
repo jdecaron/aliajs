@@ -1,4 +1,5 @@
 const child_process = require('child_process')
+const fetch = require('node-fetch')
 const util = require('util')
 
 const exec = util.promisify(child_process.exec)
@@ -73,6 +74,13 @@ function hide({ target, secrets }) {
 }
 
 exports.install = async function ({ path, major, ssh, user }) {
+  await ssh({ command: `adduser --disabled-password --gecos "" ubuntu`, user: 'root' })
+  await ssh({ command: `usermod -aG sudo ubuntu`, user: 'root' })
+  await ssh({ command: `echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu && chmod 440 /etc/sudoers.d/ubuntu`, user: 'root' })
+  await ssh({ command: `mkdir -p /home/ubuntu/.ssh && chmod 700 /home/ubuntu/.ssh`, user: 'root' })
+  await ssh({ command: `cp /root/.ssh/authorized_keys /home/ubuntu/.ssh/authorized_keys`, user: 'root' })
+  await ssh({ command: `chown -R ubuntu:ubuntu /home/ubuntu/.ssh && chmod 600 /home/ubuntu/.ssh/authorized_keys`, user: 'root' })
+
   await ssh({ command: `sudo mkdir ${path}` })
   await ssh({ command: `sudo chown ${user} ${path}` })
   await ssh({ command: `echo 'LineMax=1M' | sudo tee -a /etc/systemd/journald.conf` })
@@ -126,13 +134,15 @@ exports.service = ({ instances, service_name, tier }) => {
   }
 }
 
-exports.SSH = ({ address, keyName, response }) => {
-  return async function ({ command, secrets }) {
+exports.SSH = ({ address, keyName, instance, response }) => {
+  return async function ({ command, secrets, user }) {
+    user = user || process.env.ALIAJS_DEFAULT_USER
     try {
       let hidden = hide({ target: command, secrets })
+      console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-      let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+      let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
