@@ -20,6 +20,21 @@ AWS.config.update({ region: process.env.AWS_DEFAULT_REGION })
 const info = { params: {} }
 const ec2 = new AWS.EC2()
 
+const installSSLCertificates = async ({ service, ssh }) => {
+  const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]
+  for (const domain of domains) {
+    const name = getDomain({ domain })
+    const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
+    const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
+    await ssh({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
+    await ssh({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
+    await ssh({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
+    await ssh({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
+    await ssh({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
+    await ssh({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
+  }
+}
+
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   if (instance.type?.type === 'flyio') {
     return await flyioNewInstance({ address, imageName, keyName, instance, name, type })
@@ -48,33 +63,11 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
     }
   }
 
-  for (let j = 0; j < services.length; j++) {
-    const service = services[j]
-
-    let checkout
-    if (refresh === true && service.type === 'express') {
-      const directory = (await ssh.current({ command: `ls -t | grep ^${service.name} | head -n 1` })).replace(/\s$/, '')
-
-      const status = await ssh.current({ command: `cd ${directory} && git status` })
-      checkout = status.split('\n')[0].split(' ').pop()
-    }
-
-    const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]
-    for (const domain of domains) {
-      const name = getDomain({ domain })
-      const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
-      const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
-      await ssh.new({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
-      await ssh.new({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
-      await ssh.new({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
-      await ssh.new({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
-      await ssh.new({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
-      await ssh.new({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
-    }
+  for (const service of services) {
+    await installSSLCertificates({ service, ssh: ssh.new })
 
     await deploy[service.type]({
       address: Reservations[0].Instances[0].PublicIpAddress,
-      checkout,
       exec,
       initial: true,
       instance,
