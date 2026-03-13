@@ -36,7 +36,7 @@ exports.flyioNewInstance = async ({ address, imageName, keyName, instance, name,
       Instances: [{
         InstanceId: machine.id,
         PrivateIpAddress: machine.private_ip,
-        PublicIpAddress: machine.private_ip,
+        PublicIpAddress: address,
       }]
     }]
   }

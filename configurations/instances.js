@@ -122,7 +122,7 @@ exports.instances = [
   },
   {
     "name": "sauce-production",
-    // "address": "15.157.29.183",
+    "address": "2a09:8280:1::dd:9aff:1",
     "type": {
       "type": "flyio",
       "memory_mb": 256,
