@@ -121,6 +121,34 @@ exports.instances = [
     ]
   },
   {
+    "name": "sauce-production",
+    // "address": "15.157.29.183",
+    "type": {
+      "type": "flyio",
+      "memory_mb": 256,
+      "cpus": 1,
+      "cpu_kind": "shared",
+      "gpus": 0,
+      "region": "yyz",
+    },
+    "services": [
+      {
+        "name": "sauce",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "sauce.rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "proxy_pass": "http://127.0.0.1:8000",
+          },
+        ],
+      }
+    ]
+  },
+  {
     "name": "aliajs-production",
     "address": "15.157.29.183",
     "type": "t2.micro",

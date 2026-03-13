@@ -8,6 +8,7 @@ const fs = require('fs')
 const util = require('util')
 const deploy = require('./deploy')
 const { EC2NewInstance } = require('./cloud/ec2.js')
+const { flyioNewInstance } = require('./cloud/flyio.js')
 const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
@@ -20,8 +21,8 @@ const info = { params: {} }
 const ec2 = new AWS.EC2()
 
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
-  if (instance.type?.type === '') {
-    return
+  if (instance.type?.type === 'flyio') {
+    return await flyioNewInstance({ address, imageName, keyName, instance, name, type })
   }
 
   return await EC2NewInstance({ address, imageName, keyName, instance, name, type })
