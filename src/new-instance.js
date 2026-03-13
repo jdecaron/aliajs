@@ -52,8 +52,8 @@ exports.initInstance = async ({ address, instance, refresh, response, temp }) =>
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
   const ssh = {
-    current: SSH({ address: instance.address, keyName, response }),
-    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, response }),
+    current: SSH({ address: instance.address, keyName, instance, response }),
+    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response }),
   }
 
   for (let item of items.operations) {

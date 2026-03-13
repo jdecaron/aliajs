@@ -1,4 +1,5 @@
 const child_process = require('child_process')
+const fetch = require('node-fetch')
 const util = require('util')
 
 const exec = util.promisify(child_process.exec)
@@ -126,7 +127,44 @@ exports.service = ({ instances, service_name, tier }) => {
   }
 }
 
-exports.SSH = ({ address, keyName, response }) => {
+exports.SSH = ({ address, keyName, instance, response }) => {
+  console.log(require('util').inspect(instance, { depth: Infinity }))
+  if (instance?.type?.type === 'flyio') {
+    return async function ({ command, secrets }) {
+      try {
+        let hidden = hide({ target: command, secrets })
+        console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
+        typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
+
+        const res = await fetch(`https://api.machines.dev/v1/apps/${process.env.APP_NAME}/machines/${instance.InstanceId}/exec`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.FLY_API_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            cmd: command
+          })
+        })
+        const result = await res.json()
+        console.log(33333, result)
+
+        let stdout = result.stdout || ''
+        hidden = hide({ target: stdout, secrets })
+        typeof response === 'object' && response.write(`${hidden}\n`)
+        console.log(hidden)
+
+        if (result.exit_code !== 0) {
+          throw new Error(result.stderr || `Command exited with code ${result.exit_code}`)
+        }
+
+        return stdout
+      } catch (error) {
+        throw hide({ target: error, secrets })
+      }
+    }
+  }
+
   return async function ({ command, secrets }) {
     try {
       let hidden = hide({ target: command, secrets })
