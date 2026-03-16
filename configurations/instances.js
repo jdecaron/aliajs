@@ -122,15 +122,16 @@ exports.instances = [
   },
   {
     "name": "sauce-production",
-    "address": "2a09:8280:1::dd:9aff:1",
-    "type": {
-      "type": "flyio",
-      "memory_mb": 256,
-      "cpus": 1,
-      "cpu_kind": "shared",
-      "gpus": 0,
-      "region": "yyz",
-    },
+    "type": "t2.micro",
+    // "address": "2600:1f11:900:ec00::1",
+    // "type": {
+    //   "type": "flyio",
+    //   "memory_mb": 256,
+    //   "cpus": 1,
+    //   "cpu_kind": "shared",
+    //   "gpus": 0,
+    //   "region": "yyz",
+    // },
     "services": [
       {
         "name": "sauce",

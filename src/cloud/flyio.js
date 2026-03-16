@@ -26,10 +26,16 @@ exports.flyioNewInstance = async ({ address, imageName, keyName, instance, name,
       }
     })
   })).json()
+  if (machine.error) {
+    throw new Error(`flyio machine create: ${machine.error}`)
+  }
 
-  await (await fetch(`https://api.machines.dev/v1/apps/${process.env.APP_NAME}/machines/${machine.id}/wait?state=started&instance_id=${machine.instance_id}`, {
+  const waitResult = await (await fetch(`https://api.machines.dev/v1/apps/${process.env.APP_NAME}/machines/${machine.id}/wait?state=started`, {
     headers: { 'Authorization': `Bearer ${process.env.FLY_API_TOKEN}` }
   })).json()
+  if (waitResult.error) {
+    throw new Error(`flyio machine wait: ${waitResult.error}`)
+  }
 
   return {
     Reservations: [{

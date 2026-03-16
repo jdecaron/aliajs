@@ -128,11 +128,11 @@ exports.service = ({ instances, service_name, tier }) => {
 }
 
 exports.SSH = ({ address, keyName, instance, response }) => {
-  console.log(require('util').inspect(instance, { depth: Infinity }))
   if (instance?.type?.type === 'flyio') {
     return async function ({ command, secrets }) {
       try {
         let hidden = hide({ target: command, secrets })
+        console.log('\x1b[33m%s\x1b[0m', `${instance.InstanceId}`)
         console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
         typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
 
@@ -168,6 +168,7 @@ exports.SSH = ({ address, keyName, instance, response }) => {
   return async function ({ command, secrets }) {
     try {
       let hidden = hide({ target: command, secrets })
+      console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
       let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
