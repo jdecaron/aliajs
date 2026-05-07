@@ -3,7 +3,7 @@ const { getItem, items } = require('../src/items')
 exports.instances = [
 {
   "name": "erpnext-production",
-    "address": "35.183.159.96",
+    "address": "5.161.19.205",
     "type": "t3a.small",
     "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [

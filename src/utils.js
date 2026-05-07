@@ -171,7 +171,7 @@ exports.SSH = ({ address, keyName, instance, response }) => {
       console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-      let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+      let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${process.env.ALIAJS_DEFAULT_USER}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
