@@ -6,8 +6,8 @@ const AWS = require('aws-sdk')
 const ejs = require('ejs')
 const fs = require('fs')
 const util = require('util')
+const { newInstance } = require('./cloud/cloud.js')
 const deploy = require('./deploy')
-const { EC2NewInstance } = require('./cloud/ec2.js')
 const { flyioNewInstance } = require('./cloud/flyio.js')
 const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
@@ -35,19 +35,11 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
-  if (instance.type?.type === 'flyio') {
-    return await flyioNewInstance({ address, imageName, keyName, instance, name, type })
-  }
-
-  return await EC2NewInstance({ address, imageName, keyName, instance, name, type })
-}
-
 exports.initInstance = async ({ address, instance, refresh, response, temp }) => {
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-  const { Reservations } = await exports.newInstance({ address, imageName, keyName, instance, name, type })
+  const { Reservations } = await newInstance({ address, imageName, keyName, instance, name, type })
   // const { Reservations } = await ec2.waitFor('instanceRunning', { InstanceIds: ['i-0bb05f291bb32cda9'] }).promise()
   instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
 
