@@ -19,6 +19,6 @@ exports.newInstance = async ({ address, imageName, keyName, instance, name, type
   }
 }
 
-exports.createImage = async ({ address, imageName, keyName, instance, name, type }) => {
-  return await hetznerCreateImage({ address, imageName, keyName, instance, name, type })
+exports.createImage = async ({ instance, image }) => {
+  return await hetznerCreateImage({ instance, image })
 }

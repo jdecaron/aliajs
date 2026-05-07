@@ -12,7 +12,7 @@ exports.hetznerCreateImage = async ({ instance, image }) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      description: image.ImageId,
+      description: image.Name,
       type: 'snapshot',
     })
   })).json()
