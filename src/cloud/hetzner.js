@@ -4,6 +4,39 @@ const fetch = require('node-fetch')
 
 const log = require('../logger')(__filename)
 
+exports.hetznerCreateImage = async ({ instance, image }) => {
+  const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}/actions/create_image`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      description: image.ImageId,
+      type: 'snapshot',
+    })
+  })).json()
+
+  if (result.error) {
+    throw new Error(`hetzner create image: ${result.error.message}`)
+  }
+
+  const { image: snapshot, action } = result
+  let actionStatus = action.status
+  while (actionStatus === 'running') {
+    await new Promise(r => setTimeout(r, 2000))
+    const actionResult = await (await fetch(`https://api.hetzner.cloud/v1/actions/${action.id}`, {
+      headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
+    })).json()
+    if (actionResult.action.status === 'error') {
+      throw new Error(`hetzner create image action: ${actionResult.action.error.message}`)
+    }
+    actionStatus = actionResult.action.status
+  }
+
+  return { ImageId: String(snapshot.id) }
+}
+
 exports.hetznerNewInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const result = await (await fetch('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
