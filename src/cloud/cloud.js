@@ -3,7 +3,7 @@ require('dotenv').config()
 const log = require('../logger')(__filename)
 
 const { flyioNewInstance } = require('./flyio.js')
-const { hetznerNewInstance, hetznerCreateImage } = require('./hetzner.js')
+const { hetznerNewInstance, hetznerCreateImage, hetznerDeleteInstance } = require('./hetzner.js')
 
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   if (instance?.type?.type === 'flyio') {
@@ -21,4 +21,8 @@ exports.newInstance = async ({ address, imageName, keyName, instance, name, type
 
 exports.createImage = async ({ instance, image }) => {
   return await hetznerCreateImage({ instance, image })
+}
+
+exports.deleteInstance = async ({ instance }) => {
+  return await hetznerDeleteInstance({ instance })
 }

@@ -37,6 +37,17 @@ exports.hetznerCreateImage = async ({ instance, image }) => {
   return { ImageId: String(snapshot.id) }
 }
 
+exports.hetznerDeleteInstance = async ({ instance }) => {
+  const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
+  })).json()
+
+  if (result.error) {
+    throw new Error(`hetzner delete instance: ${result.error.message}`)
+  }
+}
+
 exports.hetznerNewInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const result = await (await fetch('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
