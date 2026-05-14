@@ -1,6 +1,6 @@
 {
   "name": "aliajs",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "node": "<=18"
   },
@@ -9,11 +9,11 @@
   },
   "dependencies": {
     "async-retry": "^1.3.3",
-    "aws-sdk": "^2.1595.0",
     "bole": "^5.0.11",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
-    "express": "^4.19.2",
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.7.7",
     "node-fetch": "^2.7.0"
   }
 }
