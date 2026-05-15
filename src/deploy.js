@@ -5,15 +5,16 @@ const log = require('./logger')(__filename)
 
 const retry = require('async-retry')
 const dns = require('dns')
-const ejs = require('ejs')
+const { Eta } = require('eta')
 const fs = require('fs')
 const https = require('https')
 const fetch = require('node-fetch')
+const path = require('path')
 const util = require('util')
 const { getItems, getNotes, items } = require('./items')
 
 const lookup = util.promisify(dns.lookup)
-const renderFile = util.promisify(ejs.renderFile)
+const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })
 
 exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
@@ -90,11 +91,11 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
     template = service.template
   }
   for (let domain of domains) {
-    const config = await renderFile(`${__dirname}/../templates/nginx/${template}.ejs`, { locations, home, server_name: domain, uniqueBuilds })
+    const config = await eta.renderAsync(`nginx/${template}`, { locations, home, server_name: domain, uniqueBuilds })
     fs.writeFileSync(`${temp}/sync/sites-enabled/${domain}`, config)
   }
 
-  const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
+  const custom = await eta.renderAsync('nginx/custom', {})
   fs.writeFileSync(`${temp}/sync/custom.conf`, custom)
 
   await exec({ command: `rsync -az ${temp}/sync/ ${user}@${address}:${home}/${unique}` })
@@ -167,7 +168,8 @@ exports.nodejs  = async function ({ address, checkout, domain, exec, home, initi
 
   let variables = ''
   try {
-    variables = await renderFile(`${__dirname}/../configurations/systemd/variables/${service.name}/${service.tier}.ejs`, { main: command({ service, type: 'main' }), run: command({ service, type: 'run' }), service_name: service.name, tier: service.tier, unique_service_name, user, home, domain, port, variables })
+    const variablesTemplate = fs.readFileSync(`${__dirname}/../configurations/systemd/variables/${service.name}/${service.tier}.eta`, 'utf8')
+    variables = await eta.renderStringAsync(variablesTemplate, { main: command({ service, type: 'main' }), run: command({ service, type: 'run' }), service_name: service.name, tier: service.tier, unique_service_name, user, home, domain, port, variables })
   } catch (error) {
     log.warn(`WARNING! this service has no variable file for tier ${service.tier} (it can be OK)`)
   }
@@ -180,7 +182,7 @@ exports.nodejs  = async function ({ address, checkout, domain, exec, home, initi
     }
   }
 
-  const system = await renderFile(`${__dirname}/../templates/systemd/service.ejs`, { main: command({ service, type: 'main' }), run: command({ service, type: 'run' }), service_name: service.name, tier: service.tier, unique_service_name, user, home, domain, port, variables })
+  const system = await eta.renderAsync('systemd/service', { main: command({ service, type: 'main' }), run: command({ service, type: 'run' }), service_name: service.name, tier: service.tier, unique_service_name, user, home, domain, port, variables })
   fs.writeFileSync(`${temp}/service`, system)
 
   const locations = [{ location: '/', proxy_pass: `http://127.0.0.1:${port}` }]
@@ -192,12 +194,12 @@ exports.nodejs  = async function ({ address, checkout, domain, exec, home, initi
   const domains = service.domains || [server_name]
   await exec({ command: `mkdir ${temp}/sites-enabled` })
   for (let domain of domains) {
-    const config = await renderFile(`${__dirname}/../templates/nginx/server.ejs`, { locations, server_name: domain })
+    const config = await eta.renderAsync('nginx/server', { locations, server_name: domain })
     fs.writeFileSync(`${temp}/nginx`, config)
     fs.writeFileSync(`${temp}/sites-enabled/${domain}`, config)
   }
 
-  const custom = await renderFile(`${__dirname}/../templates/nginx/custom.ejs`, {})
+  const custom = await eta.renderAsync('nginx/custom', {})
   fs.writeFileSync(`${temp}/custom`, custom)
 
   await exec({ command: `rsync -az ${temp}/ ${user}@${address}:${home}/${unique_service_name}` })
@@ -272,9 +274,9 @@ function command({ data, service, type }) {
   }
 
   if (typeof service.setup === 'object' && typeof service.setup[type] === 'string') {
-    return ejs.render(service.setup[type], data)
+    return eta.renderString(service.setup[type], data)
   } else {
-    return ejs.render(defaults[service.language][type], data)
+    return eta.renderString(defaults[service.language][type], data)
   }
 }
 
@@ -302,7 +304,7 @@ async function setup({ data, exec, service, ssh, type }) {
 
   if (typeof service.setup === 'object' && typeof service.setup[type] === 'object') {
     for (let i = 0; i < service.setup[type].length; i++) {
-      const command = ejs.render(service.setup[type][i].command, data)
+      const command = eta.renderString(service.setup[type][i].command, data)
       await targets[service.setup[type][i].target]({ command })
     }
   }
