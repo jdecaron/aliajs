@@ -2,16 +2,12 @@ require('dotenv').config()
 
 const log = require('./logger')(__filename)
 
-const ejs = require('ejs')
 const fs = require('fs')
-const util = require('util')
 const cloud = require('./cloud/cloud.js')
 const deploy = require('./deploy')
 const { getNotes, items } = require('./items')
 const { getDomain, exec, SSH } = require('./utils')
 const configurations = require('../configurations/instances')
-
-const renderFile = util.promisify(ejs.renderFile)
 
 const installSSLCertificates = async ({ service, ssh }) => {
   const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]

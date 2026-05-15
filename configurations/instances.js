@@ -4,7 +4,6 @@ exports.instances = [
 {
   "name": "erpnext-production",
     "address": "5.161.19.205",
-    "type": "ccx13",
     "additionalSecurityGroups": ["sg-014419c2799d52b95"],
     "services": [
       {
@@ -146,8 +145,7 @@ exports.instances = [
   },
   {
     "name": "aliajs-production",
-    "address": "15.157.29.183",
-    "type": "t2.micro",
+    "address": "5.161.18.96",
     "services": [
       {
         "name": "aliajs",
