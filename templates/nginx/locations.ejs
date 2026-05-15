@@ -1,6 +1,6 @@
-<%_ for (const location of locations) { _%>
+<% for (const location of locations) { -%>
   location <%= location.location %> {
-<%_ if (typeof location.proxy_pass === 'string') { _%>
+<% if (typeof location.proxy_pass === 'string') { -%>
     add_header X-Frame-Options DENY;
 
     proxy_http_version 1.1;
@@ -18,16 +18,16 @@
 
     proxy_read_timeout 86400;
     proxy_send_timeout 86400;
-<%_ } else if (typeof location.alias === 'string') { _%>
+<% } else if (typeof location.alias === 'string') { -%>
     add_header Cache-Control no-cache;
     add_header X-Frame-Options DENY;
     default_type text/html;
     set $ab "0";
     access_by_lua_block {
       local builds = {
-<%_ for (let key in uniqueBuilds) { _%>
-        <%- `["${key}"] = "${uniqueBuilds[key]}",` %>
-<%_ } _%>
+<% for (let key in uniqueBuilds) { -%>
+        <%~ `["${key}"] = "${uniqueBuilds[key]}",` %>
+<% } -%>
       }
       local ck = require "cookie"
       local cookie, err = ck:new()
@@ -53,8 +53,8 @@
     }
     alias <%= location.alias %>;
     try_files $uri /index.html =404;
-<%_ } else if (typeof location.redirect === 'string') { _%>
+<% } else if (typeof location.redirect === 'string') { -%>
     return 301 <%= location.redirect %>;
-<%_ } _%>
+<% } -%>
   }
-<%_ } _%>
+<% } -%>

@@ -10,7 +10,7 @@ User=<%= user %>
 Group=<%= user %>
 
 <% if (typeof variables === 'string' &&  variables.length > 0) { -%>
-<%- variables %>
+<%~ variables %>
 <% } -%>
 Environment=PORT=<%= port %>
 
