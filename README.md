@@ -11,8 +11,6 @@ AliaJS: Atwood's Law Infrastructure as JavaScript
 
 If you or your team care about JavaScript, then maybe AliaJS is a solution for your infrastructure orchestration.
 
-AliaJS is to [Node.js](https://nodejs.org/en) as [Capistrano](https://capistranorb.com) is to [Ruby on Rails](https://rubyonrails.org).
-
 ## What AliaJS is:
 - Infrastructure orchestrator designed for small operation-infrastructure teams that want to use JavaScript as their definition & execution language.
 - Designed with architecture and code simplicity. AliaJS takes HTTP as an input & can talk HTTP as a first-class citizen. It's an Express.js service that runs shell commands & Node.js code.
@@ -22,7 +20,6 @@ AliaJS is to [Node.js](https://nodejs.org/en) as [Capistrano](https://capistrano
 # What AliaJS is not:
 - Tool for big operation-infrastructure teams.
 - Project that is well supported by a community.
-- Something that is perfect, AliaJS is aligned with the [wabi-sabi ](https://en.wikipedia.org/wiki/Wabi-sabi) way.
 
 ## Architecture
 [./src/app.js](./src/app.js), [./src/main.js](./src/main.js) & [./src/routes.js](./src/routes.js): Main Express.js files that define the server.
@@ -60,5 +57,5 @@ curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-pro
 ```bash
 curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/new-instance?address=1.1.1.1&checkout=${CHECKOUT}&instance_name=aliajs-production&replace=false"
 ```
-`address`, default `undefined`: possible values: `allocate`, `ip`: examples `address=allocate` `address=1.1.1.1`: address=allocate will request a permanent IP from AWS and associate it to the new instance.
+`address`, default `undefined`: possible values: `allocate`, `ip`: examples `address=allocate` `address=1.1.1.1`: address=allocate will request a permanent IP from the cloud provider and associate it to the new instance.
 `replace`, default `false`: will replace the current running instance.
