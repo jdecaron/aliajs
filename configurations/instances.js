@@ -37,7 +37,12 @@ exports.instances = [
       {
         "name": "erpnext",
         "tier": "production",
-        "type": "nodejs",
+        "type": "erpnext",
+        "template": "frappe",
+        "domains": [
+          "erpnext-production.rotat.io",
+        ],
+        "locations": [],
         "setup": {
           "initial": [
             { command: "sudo apt-get update", target: "new" },
