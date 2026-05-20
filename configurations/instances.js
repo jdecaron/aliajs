@@ -1,6 +1,6 @@
-const { getItem, items } = require('../src/items')
+import { getItem, items } from '../src/items.js'
 
-exports.instances = [
+export const instances = [
 {
   "name": "erpnext-production",
     "address": "5.161.19.205",

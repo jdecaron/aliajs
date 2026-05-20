@@ -1,8 +1,11 @@
-const crypto = require('crypto')
-const { Hono } = require('hono')
-const routes = require('./routes')
+import crypto from 'crypto'
+import { fileURLToPath } from 'url'
+import { Hono } from 'hono'
+import routes from './routes.js'
+import logger from './logger.js'
 
-const log = require('./logger')(__filename)
+const __filename = fileURLToPath(import.meta.url)
+const log = logger(__filename)
 
 const app = new Hono()
 
@@ -22,4 +25,4 @@ app.onError((error, c) => {
   return c.text('{"type":"unknown","message":"Server internal error"}', 500)
 })
 
-module.exports = app
+export default app

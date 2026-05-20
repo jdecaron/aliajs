@@ -1,33 +1,35 @@
-require('dotenv').config()
+import 'dotenv/config'
+import { fileURLToPath } from 'url'
+import logger from '../logger.js'
+import * as hetzner from './hetzner.js'
 
-const log = require('../logger')(__filename)
-
-const hetzner = require('./hetzner.js')
+const __filename = fileURLToPath(import.meta.url)
+const log = logger(__filename)
 
 function cloud() {
   return hetzner
 }
 
-exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
+export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   return await cloud().newInstance({ address, imageName, keyName, instance, name, type })
 }
 
-exports.createImage = async ({ instance, image }) => {
+export const createImage = async ({ instance, image }) => {
   return await cloud().createImage({ instance, image })
 }
 
-exports.deleteInstance = async ({ instance }) => {
+export const deleteInstance = async ({ instance }) => {
   return await cloud().deleteInstance({ instance })
 }
 
-exports.deleteImages = async ({ description }) => {
+export const deleteImages = async ({ description }) => {
   return await cloud().deleteImagesByDescription(description)
 }
 
-exports.associateAddress = async ({ instance, ssh }) => {
+export const associateAddress = async ({ instance, ssh }) => {
   return await cloud().associateAddress({ instance, ssh })
 }
 
-exports.describeInstances = async () => {
+export const describeInstances = async () => {
   return await cloud().describeInstances()
 }

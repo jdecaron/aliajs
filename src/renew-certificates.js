@@ -1,13 +1,15 @@
-require('dotenv').config({ path: `${__dirname}/../.env` })
+import 'dotenv/config'
+import { fileURLToPath } from 'url'
+import child_process from 'child_process'
+import logger from './logger.js'
+import { getItem, getNotes, items, setItems } from './items.js'
+import { getDomain, exec, SSH } from './utils.js'
+import { domains } from '../configurations/domains.js'
 
-const log = require('./logger')(__filename)
+const __filename = fileURLToPath(import.meta.url)
+const log = logger(__filename)
 
-const child_process = require('child_process')
-const { getItem, getNotes, items, setItems } = require('./items')
-const { getDomain, exec, SSH } = require('./utils')
-const { domains } = require('../configurations/domains')
-
-exports.renewCertificates = async () => {
+export const renewCertificates = async () => {
   for (let i = 0; i < domains.length; i++) {
     const host = domains[i]
     const ssh = {
@@ -43,4 +45,4 @@ exports.renewCertificates = async () => {
   }
 }
 
-exports.renewCertificates()
+renewCertificates()

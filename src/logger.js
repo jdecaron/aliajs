@@ -1,5 +1,5 @@
-const { hostname } = require('os')
-const bole = require('bole')
+import { hostname } from 'os'
+import bole from 'bole'
 
 if (!('toJSON' in Error.prototype)) {
   // See this link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#:~:text=Only%20enumerable%20own%20properties%20are%20visited to understand the why of these line below. bole use fast-safe-stringify which use JSON.stringify() which stringify Error objects into an empty {}.
@@ -24,4 +24,4 @@ bole.output({
     stream: process.stdout,
 })
 
-module.exports = bole(process.env.APP_NAME)
+export default bole(process.env.APP_NAME)
