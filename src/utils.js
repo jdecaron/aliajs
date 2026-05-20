@@ -1,16 +1,16 @@
-import child_process from 'child_process'
-import util from 'util'
+const child_process = require('child_process')
+const util = require('util')
 
-const execAsync = util.promisify(child_process.exec)
+const exec = util.promisify(child_process.exec)
 
-export const version = /v\d+\.\d+\.\d+/
+exports.version = /v\d+\.\d+\.\d+/
 
-export const exec = async ({ command, response, secrets }) => {
+exports.exec = async ({ command, response, secrets }) => {
   try {
     let hidden = hide({ target: command, secrets })
     console.log('\x1b[33m%s\x1b[0m', hidden)
     typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-    const { stdout } = (await execAsync(command, { maxBuffer: 1024 * 1024 * 4 }))
+    const { stdout } = (await exec(command, { maxBuffer: 1024 * 1024 * 4 }))
     hidden = hide({ target: stdout, secrets })
     console.log(hidden)
     typeof response === 'object' && response.write(`${hidden}\n`)
@@ -20,18 +20,18 @@ export const exec = async ({ command, response, secrets }) => {
   }
 }
 
-export const EXEC = ({ response }) => {
+exports.EXEC = ({ response }) => {
   return async function ({ command, secrets }) {
-    return exec({ command, response, secrets })
+    return exports.exec({ command, response, secrets })
   }
 }
 
-export const getDomain = ({ domain }) => {
+exports.getDomain = ({ domain }) => {
   const split = domain.split('.')
   return `${split[split.length - 2]}.${split[split.length - 1]}`
 }
 
-export const getLatestNode = ({ major }) => {
+exports.getLatestNode = ({ major }) => {
   return fetch(`https://nodejs.org/download/release/latest-v${major}.x/SHASUMS256.txt`)
     .then(result => result.text())
     .then((body) => {
@@ -41,7 +41,7 @@ export const getLatestNode = ({ major }) => {
           return typeof line[1] === 'string' && line[1].match(/linux-x64\.tar\.xz$/i)
         })
         .map(line => {
-          return { checksum: line[0], file: line[1], path: line[1].match(/.*[^\.tar\.xz$]/)[0], version: line[1].match(version)[0] }
+          return { checksum: line[0], file: line[1], path: line[1].match(/.*[^\.tar\.xz$]/)[0], version: line[1].match(exports.version)[0] }
         })[0]
     })
 }
@@ -72,7 +72,7 @@ function hide({ target, secrets }) {
   return result
 }
 
-export const install = async function ({ path, major, ssh, user }) {
+exports.install = async function ({ path, major, ssh, user }) {
   await ssh({ command: `adduser --disabled-password --gecos "" ubuntu`, user: 'root' })
   await ssh({ command: `usermod -aG sudo ubuntu`, user: 'root' })
   await ssh({ command: `echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu && chmod 440 /etc/sudoers.d/ubuntu`, user: 'root' })
@@ -92,8 +92,8 @@ export const install = async function ({ path, major, ssh, user }) {
   await ssh({ command: 'sudo rm /etc/nginx/sites-enabled/default' })
   await ssh({ command: 'sudo ln /usr/share/nginx/modules-available/mod-http-lua.conf /usr/share/nginx/modules-enabled' })
 
-  const latestNode = await getLatestNode({ major })
-  for (const command of installNode({ path, latestNode, major })) {
+  const latestNode = await exports.getLatestNode({ major })
+  for (const command of exports.installNode({ path, latestNode, major })) {
     await ssh({ command })
   }
   await ssh({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/node /usr/bin/node` })
@@ -103,7 +103,7 @@ export const install = async function ({ path, major, ssh, user }) {
   await ssh({ command: 'sudo unattended-upgrade -d' })
 }
 
-export const installNode = ({ path, latestNode, major }) => {
+exports.installNode = ({ path, latestNode, major }) => {
   return [
     `cd ${path} && curl -L -O https://nodejs.org/download/release/latest-v${major}.x/${latestNode.file}`,
     `cd ${path} && echo "${latestNode.checksum} ${latestNode.file}" | sha256sum -c`,
@@ -112,7 +112,7 @@ export const installNode = ({ path, latestNode, major }) => {
   ]
 }
 
-export const instance = ({ instances, instance_name }) => {
+exports.instance = ({ instances, instance_name }) => {
   for (let i = 0; i < instances.length; i++) {
     if (instances[i].name === instance_name) {
       return instances[i]
@@ -120,7 +120,7 @@ export const instance = ({ instances, instance_name }) => {
   }
 }
 
-export const service = ({ instances, service_name, tier }) => {
+exports.service = ({ instances, service_name, tier }) => {
   for (let i = 0; i < instances.length; i++) {
     for (let j = 0; j < instances[i].services.length; j++) {
       if (instances[i].services[j].name === service_name && instances[i].services[j].tier === tier) {
@@ -133,7 +133,7 @@ export const service = ({ instances, service_name, tier }) => {
   }
 }
 
-export const SSH = ({ address, keyName, instance, response }) => {
+exports.SSH = ({ address, keyName, instance, response }) => {
   return async function ({ command, secrets, user }) {
     user = user || process.env.ALIAJS_DEFAULT_USER
     try {
@@ -141,7 +141,7 @@ export const SSH = ({ address, keyName, instance, response }) => {
       console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-      let stdout = (await execAsync(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+      let stdout = (await exec(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout

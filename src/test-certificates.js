@@ -1,7 +1,7 @@
-import express from 'express'
-import schedule from 'node-schedule'
-import rp from 'request-promise'
-import sslChecker from 'ssl-checker'
+const express = require('express')
+const schedule = require('node-schedule')
+const rp = require('request-promise')
+const sslChecker = require('ssl-checker')
 
 const log = logger.child({ __filename })
 
@@ -64,4 +64,4 @@ schedule.scheduleJob('0 0 0 * * *', function () {
   test({}, noOperationRes)
 })
 
-export default router
+module.exports = router

@@ -1,8 +1,9 @@
-import 'dotenv/config'
-import './items.js'
+require('dotenv').config()
 
-import { serve } from '@hono/node-server'
-import app from './app.js'
+require('./items')
+
+const { serve } = require('@hono/node-server')
+const app = require('./app')
 
 const port = parseInt(process.env.PORT || '3000', 10)
 

@@ -1,16 +1,11 @@
-import dotenv from 'dotenv'
-import child_process from 'child_process'
-import crypto from 'crypto'
-import fs from 'fs'
-import { dirname } from 'path'
-import { fileURLToPath } from 'url'
-import logger from './logger.js'
+const dotenv = require('dotenv')
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const log = logger(__filename)
+const child_process = require('child_process')
+const crypto = require('crypto')
+const fs = require('fs')
+const log = require('./logger')(__filename)
 
-export function getItem({ items, name }) {
+exports.getItem = ({ items, name }) => {
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     if (item.name === name) {
@@ -21,9 +16,9 @@ export function getItem({ items, name }) {
   throw Error(`getItem: Could not find any item named '${name}'`)
 }
 
-export function getNotes({ items, name, systemdEscape }) {
+exports.getNotes = ({ items, name, systemdEscape }) => {
   try {
-    const item = getItem({ items, name })
+    const item = exports.getItem({ items, name })
     if (systemdEscape === true) {
       return JSON.stringify(item.notes)
     }
@@ -33,7 +28,7 @@ export function getNotes({ items, name, systemdEscape }) {
   }
 }
 
-export function getItems({ variables }) {
+exports.getItems = ({ variables }) => {
   const env = Object.assign({}, process.env, {
     BW_CLIENTID: variables[0],
     BW_CLIENTSECRET: variables[1],
@@ -68,8 +63,8 @@ export function getItems({ variables }) {
   return items
 }
 
-export function setItems({ index, items: itemsArg }) {
-  const variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))[index]
+exports.setItems = ({ index, items }) => {
+  const variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))[index]
   const env = Object.assign({}, process.env, {
     BW_CLIENTID: variables[0],
     BW_CLIENTSECRET: variables[1],
@@ -87,8 +82,8 @@ export function setItems({ index, items: itemsArg }) {
   try {
     child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
     env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
-    for (let i = 0; i < itemsArg.length; i++) {
-      item = itemsArg[i]
+    for (let i = 0; i < items.length; i++) {
+      item = items[i]
       child_process.execSync( `bw edit item ${item.id} ${Buffer.from(JSON.stringify(item)).toString('base64')}`, { env, encoding: 'utf8' })
     }
     child_process.execSync('bw logout')
@@ -100,9 +95,9 @@ export function setItems({ index, items: itemsArg }) {
   }
 }
 
-export let items = {}
+exports.items = {}
 
-export const validations = {
+exports.validations = {
   certificates: {},
   development: {},
   operations: {},
@@ -124,13 +119,13 @@ function restore() {
   const encryptionIV = Buffer.from(data[0], 'hex')
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, encryptionIV)
   const final = `${decipher.update(data[1], 'hex', 'utf8')}${decipher.final('utf8')}`
-  items = JSON.parse(final)
+  exports.items = JSON.parse(final)
   validate()
 }
 
 function validate() {
-  for (const name in validations) {
-    if (getNotes({ items: items[name], name: 'restore_validation' }) !== process.env.RESTORE_VALIDATION) {
+  for (const name in exports.validations) {
+    if (exports.getNotes({ items: exports.items[name], name: 'restore_validation' }) !== process.env.RESTORE_VALIDATION) {
       throw Error(`restore: Validations failed, could not validate 'restore_validation' notes for ${name}`)
     }
   }
@@ -140,7 +135,7 @@ function variables() {
   const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
   for (let key in parsed) {
     if (process.env[key] === '') {
-      process.env[key] = getItem({ items: items.operations, name: key }).notes
+      process.env[key] = exports.getItem({ items: exports.items.operations, name: key }).notes
     }
   }
 }
@@ -148,17 +143,17 @@ function variables() {
 try {
   // Development items
   // restore()
-  // items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
-  // console.log(items)
+  // exports.items.operations.variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))
+  // console.log(exports.items)
 
   // Production items
-  items.operations = getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
+  exports.items.operations = exports.getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
   restore()
-  items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
-  items.development = getItems({ variables: items.operations.variables[1] })
-  items.certificates = getItems({ variables: items.operations.variables[2] })
-  backup({ data: JSON.stringify(items) })
-  console.log(items)
+  exports.items.operations.variables = JSON.parse(exports.getNotes({ items: exports.items.operations, name: 'variables' }))
+  exports.items.development = exports.getItems({ variables: exports.items.operations.variables[1] })
+  exports.items.certificates = exports.getItems({ variables: exports.items.operations.variables[2] })
+  backup({ data: JSON.stringify(exports.items) })
+  // console.log(exports.items)
 
   variables()
 } catch (error) {

@@ -1,15 +1,13 @@
-import 'dotenv/config'
-import fs from 'fs'
-import { fileURLToPath } from 'url'
-import logger from './logger.js'
-import * as cloud from './cloud/cloud.js'
-import * as deploy from './deploy.js'
-import { getNotes, items } from './items.js'
-import { getDomain, exec, SSH } from './utils.js'
-import * as configurations from '../configurations/instances.js'
+require('dotenv').config()
 
-const __filename = fileURLToPath(import.meta.url)
-const log = logger(__filename)
+const log = require('./logger')(__filename)
+
+const fs = require('fs')
+const cloud = require('./cloud/cloud.js')
+const deploy = require('./deploy')
+const { getNotes, items } = require('./items')
+const { getDomain, exec, SSH } = require('./utils')
+const configurations = require('../configurations/instances')
 
 const installSSLCertificates = async ({ service, ssh }) => {
   const domains = service.domains || [`${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`]
@@ -26,7 +24,7 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-export const initInstance = async ({ address, instance, refresh, replace, response, temp }) => {
+exports.initInstance = async ({ address, instance, refresh, replace, response, temp }) => {
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
@@ -68,14 +66,14 @@ export const initInstance = async ({ address, instance, refresh, replace, respon
     return Reservations
   }
 
-export const initInstances = async ({ address, instances, replace, response }) => {
+exports.initInstances = async ({ address, instances, replace, response }) => {
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
 
   for (let i = 0; i < instances.length; i++) {
     const instance = instances[i]
-    const Reservations = await initInstance({ address, instance, replace, response, temp })
+    const Reservations = await exports.initInstance({ address, instance, replace, response, temp })
 
     if (replace === true) {
       // !!!!!!!! Code below this line is not guaranteed to run on aliajs
