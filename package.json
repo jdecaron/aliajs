@@ -2,7 +2,7 @@
   "name": "aliajs",
   "version": "0.1.0",
   "engines": {
-    "node": "<=18"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "node --watch-path=./src ./src/main.js"
@@ -13,7 +13,6 @@
     "dotenv": "^16.4.5",
     "eta": "^3.5.0",
     "@hono/node-server": "^1.13.7",
-    "hono": "^4.7.7",
-    "node-fetch": "^2.7.0"
+    "hono": "^4.7.7"
   }
 }

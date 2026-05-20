@@ -1,7 +1,5 @@
 require('dotenv').config()
 
-const fetch = require('node-fetch')
-
 const log = require('../logger')(__filename)
 
 exports.createImage = async ({ instance, image }) => {
@@ -148,7 +146,7 @@ exports.deleteImagesByDescription = async (description) => {
 exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const image = await getSnapshotByDescription(imageName) || process.env.ALIAJS_DEFAULT_IMAGE_ID
 
-  const result = await (await fetch('https://api.hetzner.cloud/v1/servers', {
+  const response = await fetch('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
@@ -161,13 +159,14 @@ exports.newInstance = async ({ address, imageName, keyName, instance, name, type
       location: process.env.ALIAJS_DEFAULT_REGION,
       ssh_keys: [keyName],
     })
-  })).json()
+  })
 
-  if (result.error) {
-    throw new Error(`hetzner server create: ${result.error.message}`)
+  if (response.status >= 400) {
+    const errorResult = await response.json()
+    throw new Error(`hetzner server create: ${errorResult.error.message}`)
   }
 
-  const { server, action } = result
+  const { server, action } = await response.json()
   let actionStatus = action.status
   while (actionStatus === 'running') {
     await new Promise(r => setTimeout(r, 2000))

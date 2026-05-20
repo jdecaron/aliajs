@@ -1,5 +1,4 @@
 const child_process = require('child_process')
-const fetch = require('node-fetch')
 const util = require('util')
 
 const exec = util.promisify(child_process.exec)
