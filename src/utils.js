@@ -133,6 +133,19 @@ exports.service = ({ instances, service_name, tier }) => {
   }
 }
 
+exports.retry = async function (fn, { retries = 10, factor = 2, minTimeout = 1000, maxTimeout = Infinity, randomize = true } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (attempt >= retries) throw error
+      const random = randomize ? Math.random() + 1 : 1
+      const timeout = Math.min(random * minTimeout * Math.pow(factor, attempt), maxTimeout)
+      await new Promise((resolve) => setTimeout(resolve, timeout))
+    }
+  }
+}
+
 exports.SSH = ({ address, keyName, instance, response }) => {
   return async function ({ command, secrets, user }) {
     user = user || process.env.ALIAJS_DEFAULT_USER

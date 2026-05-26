@@ -3,7 +3,6 @@ dotenv.config()
 
 const log = require('./logger')(__filename)
 
-const retry = require('async-retry')
 const dns = require('dns')
 const { Eta } = require('eta')
 const fs = require('fs')
@@ -11,6 +10,7 @@ const https = require('https')
 const path = require('path')
 const util = require('util')
 const { getItems, getNotes, items } = require('./items')
+const { retry } = require('./utils')
 
 const lookup = util.promisify(dns.lookup)
 const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })

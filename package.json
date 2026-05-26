@@ -8,7 +8,6 @@
     "dev": "node --watch-path=./src ./src/main.js"
   },
   "dependencies": {
-    "async-retry": "^1.3.3",
     "bole": "^5.0.11",
     "dotenv": "^16.4.5",
     "eta": "^3.5.0",
