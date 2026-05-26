@@ -76,10 +76,7 @@ exports.initInstances = async ({ address, instances, replace, response }) => {
     const Reservations = await exports.initInstance({ address, instance, replace, response, temp })
 
     if (replace === true) {
-      // !!!!!!!! Code below this line is not guaranteed to run on aliajs
-      // since the code below is terminating instances. aliajs could
-      // be terminated (shutdown) before it can finish this for loop.
-      // That's why aliajs is the last item of instances[].
+      // Cloud instance deletion is the last thing to run for some reasons.
       for (const runningInstance of runningReservations) {
         if (new RegExp(`^${instance.name}-[a-z0-9]+$`).test(runningInstance.name)) {
           await cloud.deleteInstance({ instance: runningInstance })
