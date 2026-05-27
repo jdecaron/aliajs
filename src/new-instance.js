@@ -30,7 +30,7 @@ exports.initInstance = async ({ address, instance, refresh, replace, response, t
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
   const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name: `${name}-${Math.random().toString(36).slice(2, 8)}`, type })
   instance.InstanceId = Reservations[0].Instances[0].InstanceId
-  instance.privateIpAddress = Reservations[0].Instances[0].PrivateIpAddress
+  instance.PublicIpAddress = Reservations[0].Instances[0].PublicIpAddress
 
   const ssh = {
     current: SSH({ address: instance.address, keyName, instance, response }),
@@ -64,7 +64,7 @@ exports.initInstance = async ({ address, instance, refresh, replace, response, t
       for (const service of services) {
         await cloud.upsertARecord({ instance, name: `${service.name}-${service.tier}`, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
       }
-      // wait 5 minutes
+      await new Promise(r => setTimeout(r, 5 * 60 * 1000))
     }
   }
 
