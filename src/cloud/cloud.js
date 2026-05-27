@@ -31,3 +31,8 @@ exports.associateAddress = async ({ instance, ssh }) => {
 exports.describeInstances = async () => {
   return await cloud().describeInstances()
 }
+
+
+exports.upsertARecord = async ({ instance, name, zone }) => {
+  return await cloud().upsertARecord({ instance, name, zone })
+}

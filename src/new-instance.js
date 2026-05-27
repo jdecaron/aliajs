@@ -57,14 +57,19 @@ exports.initInstance = async ({ address, instance, refresh, replace, response, t
     })
   }
 
-    if (replace === true) {
-      if (typeof instance.address === 'string') {
-        await cloud.associateAddress({ instance, ssh })
+  if (replace === true) {
+    if (typeof instance.address === 'string') {
+      await cloud.associateAddress({ instance, ssh })
+    } else {
+      for (const service of services) {
+        await cloud.upsertARecord({ instance, name: `${service.name}-${service.tier}`, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
       }
+      // wait 5 minutes
     }
-
-    return Reservations
   }
+
+  return Reservations
+}
 
 exports.initInstances = async ({ address, instances, replace, response }) => {
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')

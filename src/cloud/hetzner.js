@@ -2,6 +2,44 @@ require('dotenv').config()
 
 const log = require('../logger')(__filename)
 
+exports.upsertARecord = async ({ instance, name, zone }) => {
+  const headers = {
+    'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
+    'Content-Type': 'application/json',
+  }
+
+  const { rrsets } = await (await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets?per_page=100`, {
+    headers,
+  })).json()
+
+  const filteredRrsets = rrsets.filter((rrset) => {
+    return rrset.name === name
+  })
+
+  const records = [{ value: instance.PublicIpAddress }]
+  if (filteredRrsets.length > 0) {
+    const deleteResult = await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets/${name}/A`, {
+      method: 'DELETE',
+      headers,
+    })
+  }
+
+  const result = await (await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      name,
+      type: 'A',
+      ttl: 300,
+      records,
+    })
+  })).json()
+
+  if (result.error) {
+    throw new Error(`hetzner create A record: ${result.error.message}`)
+  }
+}
+
 exports.createImage = async ({ instance, image }) => {
   const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}/actions/create_image`, {
     method: 'POST',
@@ -158,6 +196,10 @@ exports.newInstance = async ({ address, imageName, keyName, instance, name, type
       image,
       location: process.env.ALIAJS_DEFAULT_REGION,
       ssh_keys: [keyName],
+      public_net: {
+        enable_ipv4: true,
+        enable_ipv6: true,
+      },
     })
   })
 
@@ -184,7 +226,8 @@ exports.newInstance = async ({ address, imageName, keyName, instance, name, type
       Instances: [{
         InstanceId: String(server.id),
         PrivateIpAddress: server.private_net?.[0]?.ip,
-        PublicIpAddress: server.public_net.ipv4.ip,
+        PublicIpAddress: server.public_net.ipv4?.ip,
+        PublicIpv6Address: server.public_net.ipv6?.ip,
         type,
       }]
     }]
