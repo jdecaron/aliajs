@@ -31,6 +31,13 @@ exports.getDomain = ({ domain }) => {
   return `${split[split.length - 2]}.${split[split.length - 1]}`
 }
 
+exports.getCloudAPItoken = ({ cloud }) => {
+  console.log(cloud)
+  if (cloud === 'hetzner') {
+    return process.env.HETZNER_API_TOKEN
+  }
+}
+
 exports.getLatestNode = ({ major }) => {
   return fetch(`https://nodejs.org/download/release/latest-v${major}.x/SHASUMS256.txt`)
     .then(result => result.text())
