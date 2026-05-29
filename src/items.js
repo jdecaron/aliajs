@@ -1,4 +1,5 @@
 const dotenv = require('dotenv')
+dotenv.config()
 
 const child_process = require('child_process')
 const crypto = require('crypto')
