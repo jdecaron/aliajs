@@ -1,38 +1,40 @@
-require('dotenv').config()
+import '../env.js'
 
-const log = require('../logger')(__filename)
+import { fileURLToPath } from 'url'
+import * as hetzner from './hetzner.js'
+import logger from '../logger.js'
 
-const hetzner = require('./hetzner.js')
+const log = logger(fileURLToPath(import.meta.url))
 
 function cloud() {
   return hetzner
 }
 
-exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
+export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   return await cloud().newInstance({ address, imageName, keyName, instance, name, type })
 }
 
-exports.createImage = async ({ instance, image }) => {
+export const createImage = async ({ instance, image }) => {
   return await cloud().createImage({ instance, image })
 }
 
-exports.deleteInstance = async ({ instance }) => {
+export const deleteInstance = async ({ instance }) => {
   return await cloud().deleteInstance({ instance })
 }
 
-exports.deleteImages = async ({ description }) => {
+export const deleteImages = async ({ description }) => {
   return await cloud().deleteImagesByDescription(description)
 }
 
-exports.associateAddress = async ({ instance, ssh }) => {
+export const associateAddress = async ({ instance, ssh }) => {
   return await cloud().associateAddress({ instance, ssh })
 }
 
-exports.describeInstances = async () => {
+export const describeInstances = async () => {
   return await cloud().describeInstances()
 }
 
 
-exports.upsertARecord = async ({ instance, name, zone }) => {
+export const upsertARecord = async ({ instance, name, zone }) => {
   return await cloud().upsertARecord({ instance, name, zone })
 }

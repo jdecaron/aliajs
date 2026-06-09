@@ -1,11 +1,13 @@
-require('dotenv').config()
+import './env.js'
 
-const log = require('./logger')(__filename)
+import { fileURLToPath } from 'url'
+import { initInstances } from './new-instance.js'
+import { SSH } from './utils.js'
+import { domains } from '../configurations/domains.js'
+import { instances } from '../configurations/instances.js'
+import logger from './logger.js'
 
-const { initInstances } = require('./new-instance')
-const { SSH } = require('./utils')
-const { domains } = require('../configurations/domains')
-const { instances } = require('../configurations/instances')
+const log = logger(fileURLToPath(import.meta.url))
 
 async function refreshInstances() {
   try {

@@ -1,21 +1,25 @@
-const dotenv = require('dotenv')
-dotenv.config()
+import './env.js'
 
-const log = require('./logger')(__filename)
+import dns from 'dns'
+import dotenv from 'dotenv'
+import { Eta } from 'eta'
+import fs from 'fs'
+import https from 'https'
+import path from 'path'
+import util from 'util'
+import { fileURLToPath } from 'url'
+import { getItems, getNotes, items } from './items.js'
+import { retry } from './utils.js'
+import logger from './logger.js'
 
-const dns = require('dns')
-const { Eta } = require('eta')
-const fs = require('fs')
-const https = require('https')
-const path = require('path')
-const util = require('util')
-const { getItems, getNotes, items } = require('./items')
-const { retry } = require('./utils')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const log = logger(__filename)
 
 const lookup = util.promisify(dns.lookup)
 const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })
 
-exports.erpnext = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
+export async function erpnext({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   // https://frappeframework.com/docs/user/en/bench/reference/new-site
   // https://frappeframework.com/docs/user/en/production-setup
   // https://frappeframework.com/docs/user/en/bench/guides/setup-production
@@ -113,7 +117,7 @@ exports.erpnext = async function ({ address, checkout, domain, exec, initial, ho
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-exports.nginx = async function ({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
+export async function nginx({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
 
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
@@ -208,7 +212,7 @@ exports.nginx = async function ({ address, checkout, domain, exec, initial, home
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-exports.nodejs  = async function ({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
+export async function nodejs({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
     checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {

@@ -1,11 +1,13 @@
-require('dotenv').config({ path: `${__dirname}/../.env` })
+import './env.js'
 
-const log = require('./logger')(__filename)
+import { fileURLToPath } from 'url'
+import './items.js'
+import * as cloud from './cloud/cloud.js'
+import { install, SSH } from './utils.js'
+import * as configurations from '../configurations/images.js'
+import logger from './logger.js'
 
-const items = require('./items')
-const cloud = require('./cloud/cloud.js')
-const { install, SSH } = require('./utils')
-const configurations = require('../configurations/images')
+const log = logger(fileURLToPath(import.meta.url))
 
 async function newImage() {
   for (const image of configurations.images) {

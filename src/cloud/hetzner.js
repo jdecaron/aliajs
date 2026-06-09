@@ -1,8 +1,11 @@
-require('dotenv').config()
+import '../env.js'
 
-const log = require('../logger')(__filename)
+import { fileURLToPath } from 'url'
+import logger from '../logger.js'
 
-exports.upsertARecord = async ({ instance, name, zone }) => {
+const log = logger(fileURLToPath(import.meta.url))
+
+export const upsertARecord = async ({ instance, name, zone }) => {
   const headers = {
     'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
     'Content-Type': 'application/json',
@@ -40,7 +43,7 @@ exports.upsertARecord = async ({ instance, name, zone }) => {
   }
 }
 
-exports.createImage = async ({ instance, image }) => {
+export const createImage = async ({ instance, image }) => {
   const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}/actions/create_image`, {
     method: 'POST',
     headers: {
@@ -73,7 +76,7 @@ exports.createImage = async ({ instance, image }) => {
   return { ImageId: String(snapshot.id) }
 }
 
-exports.deleteInstance = async ({ instance }) => {
+export const deleteInstance = async ({ instance }) => {
   const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
@@ -96,7 +99,7 @@ const getSnapshotByDescription = async (description) => {
   return result?.images?.[0]?.id
 }
 
-exports.renameInstance = async ({ instance, name }) => {
+export const renameInstance = async ({ instance, name }) => {
   const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
     method: 'PUT',
     headers: {
@@ -111,7 +114,7 @@ exports.renameInstance = async ({ instance, name }) => {
   }
 }
 
-exports.describeInstances = async () => {
+export const describeInstances = async () => {
   const result = await (await fetch('https://api.hetzner.cloud/v1/servers', {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
   })).json()
@@ -128,7 +131,7 @@ exports.describeInstances = async () => {
   }))
 }
 
-exports.associateAddress = async ({ instance, ssh }) => {
+export const associateAddress = async ({ instance, ssh }) => {
   const listResult = await (await fetch(`https://api.hetzner.cloud/v1/floating_ips?page=1&per_page=50`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
   })).json()
@@ -160,7 +163,7 @@ exports.associateAddress = async ({ instance, ssh }) => {
   await ssh.new({ command: `echo 'auto eth0:1\niface eth0:1 inet static\n    address ${instance.address}\n    netmask 255.255.255.255' | sudo tee /etc/network/interfaces.d/60-my-floating-ip.cfg` })
 }
 
-exports.deleteImagesByDescription = async (description) => {
+export const deleteImagesByDescription = async (description) => {
   const result = await (await fetch(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
   })).json()
@@ -181,7 +184,7 @@ exports.deleteImagesByDescription = async (description) => {
   }
 }
 
-exports.newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
+export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const image = await getSnapshotByDescription(imageName) || process.env.ALIAJS_DEFAULT_IMAGE_ID
 
   const response = await fetch('https://api.hetzner.cloud/v1/servers', {

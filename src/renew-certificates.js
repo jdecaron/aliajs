@@ -1,14 +1,16 @@
-require('dotenv').config({ path: `${__dirname}/../.env` })
+import './env.js'
 
-const log = require('./logger')(__filename)
+import child_process from 'child_process'
+import { fileURLToPath } from 'url'
+import * as cloud from './cloud/cloud.js'
+import { getItem, getNotes, items, setItems } from './items.js'
+import { getCloudAPItoken, getDomain, exec, SSH } from './utils.js'
+import { domains } from '../configurations/domains.js'
+import logger from './logger.js'
 
-const child_process = require('child_process')
-const cloud = require('./cloud/cloud.js')
-const { getItem, getNotes, items, setItems } = require('./items')
-const { getCloudAPItoken, getDomain, exec, SSH } = require('./utils')
-const { domains } = require('../configurations/domains')
+const log = logger(fileURLToPath(import.meta.url))
 
-exports.renewCertificates = async () => {
+export const renewCertificates = async () => {
   const { Reservations } = await cloud.newInstance({
     imageName: process.env.ALIAJS_DEFAULT_IMAGE_NAME,
     keyName: process.env.ALIAJS_KEY_NAME,
@@ -55,4 +57,4 @@ exports.renewCertificates = async () => {
   await cloud.deleteInstance({ instance })
 }
 
-exports.renewCertificates()
+renewCertificates()

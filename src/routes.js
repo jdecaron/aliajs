@@ -1,12 +1,14 @@
-const log = require('./logger')(__filename)
+import { fileURLToPath } from 'url'
+import { Hono } from 'hono'
+import { streamText } from 'hono/streaming'
+import * as deploy from './deploy.js'
+import { initInstances } from './new-instance.js'
+import * as utils from './utils.js'
+import logger from './logger.js'
+import { domains } from '../configurations/domains.js'
+import { instances } from '../configurations/instances.js'
 
-const { Hono } = require('hono')
-const { streamText } = require('hono/streaming')
-const deploy = require('./deploy')
-const { initInstances } = require('./new-instance')
-const utils = require('./utils')
-const { domains } = require('../configurations/domains')
-const { instances } = require('../configurations/instances')
+const log = logger(fileURLToPath(import.meta.url))
 
 const router = new Hono()
 
@@ -45,4 +47,4 @@ router.get('/new-instance', (c) => {
   })
 })
 
-module.exports = router
+export default router
