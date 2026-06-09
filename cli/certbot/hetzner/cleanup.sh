@@ -1,14 +1,13 @@
 #!/bin/bash
-
+# https://community.hetzner.com/tutorials/letsencrypt-dns
 # https://certbot.eff.org/docs/using.html#pre-and-post-validation-hooks
 
-if [ -f /tmp/CERTBOT_$CERTBOT_DOMAIN/RECORD_ID ]; then
-  RECORD_ID=$(cat /tmp/CERTBOT_$CERTBOT_DOMAIN/RECORD_ID)
-  rm -f /tmp/CERTBOT_$CERTBOT_DOMAIN/RECORD_ID
+domain_name="$( echo $CERTBOT_DOMAIN | rev | cut -d'.' -f 1,2 | rev)"
+subdomain=".${CERTBOT_DOMAIN%.$domain_name}"
+if [ "$CERTBOT_DOMAIN" = "$domain_name" ]; then
+  subdomain=""
 fi
 
-if [ -n "${RECORD_ID}" ]; then
-  curl -s -X DELETE "https://api.hetzner.cloud/v1/zones/$ZONE/rrsets/$RECORD_ID/TXT" \
-    -H "Authorization: Bearer $API_KEY" \
-    -H "Content-Type: application/json"
-fi
+curl "https://api.hetzner.cloud/v1/zones/${domain_name}/rrsets/_acme-challenge${subdomain}/TXT" \
+     -X "DELETE" \
+     -H "Authorization: Bearer ${API_KEY}" >/dev/null 2>/dev/null
