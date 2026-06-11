@@ -73,6 +73,13 @@ export const instances = [
             "proxy_pass": "http://127.0.0.1:8000",
           },
         ],
+        "setup": {
+          "initial": [
+            { command: "sudo apt-get -y install docker-compose", target: "new" },
+            { command: "sudo docker pull vaultwarden/server:latest", target: "new" },
+            { command: "sudo docker run  --detach --name vaultwarden --env DOMAIN=\"https://sauce-production.rotat.io\" --volume /vw-data/:/data/ --restart unless-stopped --publish 127.0.0.1:8000:80 vaultwarden/server:latest", target: "new" },
+          ],
+        },
       }
     ]
   },
