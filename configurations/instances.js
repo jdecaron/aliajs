@@ -27,7 +27,7 @@ export const instances = [
           "erpnext-production.rotat.io",
         ],
         "locations": [],
-        "setup": {
+        "operations": {
           "initial": [
             { command: "sudo apt-get update", target: "new" },
             { command: "sudo apt-get -y install git python-is-python3 python3-dev python3-pip redis-server pkg-config", target: "new" },
@@ -73,7 +73,7 @@ export const instances = [
             "proxy_pass": "http://127.0.0.1:8000",
           },
         ],
-        "setup": {
+        "operations": {
           "initial": [
             { command: "sudo apt-get -y install docker-compose", target: "new" },
             { command: "sudo docker pull vaultwarden/server:latest", target: "new" },
@@ -92,7 +92,7 @@ export const instances = [
         "language": "javascript",
         "type": "nodejs",
         "remote_repository": "https://github.com/jdecaron/aliajs.git",
-        "setup": {
+        "operations": {
           "initial": [
             // { command: "npm install -g @bitwarden/cli", target: "new" },
             // { command: "sudo ln -f -s <%= home %>/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },

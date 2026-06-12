@@ -110,7 +110,7 @@ export async function erpnext({ address, checkout, domain, exec, initial, home, 
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
@@ -205,7 +205,7 @@ export async function nginx({ address, checkout, domain, exec, initial, home, in
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
@@ -310,9 +310,9 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
 
   if (initial) {
     await ssh.new({ command: `echo '127.0.0.1 ${server_name}' | sudo tee -a /etc/hosts` })
-    await setup({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, service, ssh, type: 'initial' })
   }
-  await setup({ data: { instance, unique_service_name }, exec, service, ssh, type: 'post-build' })
+  await operations({ data: { instance, unique_service_name }, exec, service, ssh, type: 'post-build' })
 
   await ssh.new({ command: `sudo service ${unique_service_name} start` })
   await ssh.new({ command: `sudo systemctl enable ${unique_service_name}` })
@@ -375,8 +375,8 @@ function command({ data, service, type }) {
     },
   }
 
-  if (typeof service.setup === 'object' && typeof service.setup[type] === 'string') {
-    return eta.renderString(service.setup[type], data)
+  if (typeof service.operations === 'object' && typeof service.operations[type] === 'string') {
+    return eta.renderString(service.operations[type], data)
   } else {
     return eta.renderString(defaults[service.language][type], data)
   }
@@ -397,17 +397,17 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
   return buildIndex
 }
 
-async function setup({ data, exec, service, ssh, type }) {
+async function operations({ data, exec, service, ssh, type }) {
   const targets = {
     current: ssh.current,
     new: ssh.new,
     orchestrator: exec
   }
 
-  if (typeof service.setup === 'object' && typeof service.setup[type] === 'object') {
-    for (let i = 0; i < service.setup[type].length; i++) {
-      const command = eta.renderString(service.setup[type][i].command, data)
-      await targets[service.setup[type][i].target]({ command })
+  if (typeof service.operations === 'object' && typeof service.operations[type] === 'object') {
+    for (let i = 0; i < service.operations[type].length; i++) {
+      const command = eta.renderString(service.operations[type][i].command, data)
+      await targets[service.operations[type][i].target]({ command })
     }
   }
 }
