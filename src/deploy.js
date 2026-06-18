@@ -205,8 +205,10 @@ export async function nginx({ address, checkout, domain, exec, initial, home, in
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp }, exec, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'initial' })
   }
+  await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'backup' })
+  await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'restore' })
 
   await ssh.new({ command: 'sudo nginx -t' })
   await ssh.new({ command: 'sudo service nginx reload' })
@@ -398,6 +400,7 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
 }
 
 async function operations({ data, exec, service, ssh, type }) {
+  // TODO filter
   const targets = {
     current: ssh.current,
     new: ssh.new,
@@ -406,8 +409,12 @@ async function operations({ data, exec, service, ssh, type }) {
 
   if (typeof service.operations === 'object' && typeof service.operations[type] === 'object') {
     for (let i = 0; i < service.operations[type].length; i++) {
-      const command = eta.renderString(service.operations[type][i].command, data)
-      await targets[service.operations[type][i].target]({ command })
+      if (typeof service.operations[type][i].command === 'function') {
+        await service.operations[type][i].command({ c: { data, exec, service, ssh, type } })
+      } else {
+        const command = eta.renderString(service.operations[type][i].command, data)
+        await targets[service.operations[type][i].target]({ command })
+      }
     }
   }
 }

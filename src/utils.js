@@ -93,6 +93,7 @@ export async function install({ path, major, ssh, user }) {
   await ssh({ command: `echo '$MaxMessageSize 64k' | sudo tee -a /etc/rsyslog.conf` })
 
   await ssh({ command: 'sudo apt-get update' })
+  await ssh({ command: 'sudo apt-get -y install restic' })
   await ssh({ command: 'sudo apt-get -y install nginx' })
   await ssh({ command: 'sudo apt-get -y install libnginx-mod-http-lua' })
   await ssh({ command: 'sudo apt-get -y install lua-nginx-cookie' })

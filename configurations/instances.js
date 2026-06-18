@@ -45,20 +45,24 @@ export const instances = [
             { command: "sudo supervisorctl reload", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench get-app erpnext --branch version-15", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io install-app erpnext", target: "new" },
-            // { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "current" },
-            // { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress", target: "current" },
-            // { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz <%= temp %>/database.sql.gz", target: "orchestrator" },
-            // { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
-            // { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sql.gz ubuntu@<%= address %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz", target: "orchestrator" },
-            // { command: `cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io restore <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
+          ],
+          "backup": [
+            { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "current" },
+            { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress", target: "current" },
+          ],
+          "restore": [
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz <%= temp %>/database.sql.gz", target: "orchestrator" },
+            { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
+            { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sql.gz ubuntu@<%= address %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz", target: "orchestrator" },
+            { command: `cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io restore <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
             // curl --header "Authorization: token x:x" https://erpnext-production.rotat.io/api/resource/AliaJSTest/jati349euf
-          ]
+          ],
         }
       }
     ]
   },
   {
-    "name": "sauce-production",
+    "name": "aliajs-production",
     "services": [
       {
         "name": "sauce",
@@ -75,17 +79,34 @@ export const instances = [
         ],
         "operations": {
           "initial": [
+            { command: "sudo apt-get -y install restic", target: "new" },
             { command: "sudo apt-get -y install docker-compose", target: "new" },
             { command: "sudo docker pull vaultwarden/server:latest", target: "new" },
-            { command: "sudo docker run  --detach --name vaultwarden --env DOMAIN=\"https://sauce-production.rotat.io\" --volume /vw-data/:/data/ --restart unless-stopped --publish 127.0.0.1:8000:80 vaultwarden/server:latest", target: "new" },
+            { command: "sudo docker run  --detach --name vaultwarden --env DOMAIN=\"https://sauce-production.rotat.io\" --env LOGIN_RATELIMIT_MAX_BURST=20 --volume /vw-data/:/data/ --restart unless-stopped --publish 127.0.0.1:8000:80 vaultwarden/server:latest", target: "new" },
+          ],
+          "backup": [
+            { command: async ({ c }) => {
+              await c.ssh.current({ command: `sudo docker exec vaultwarden /vaultwarden backup` })
+              const backupFile = (await c.ssh.current({ command: `ls -t /vw-data/ | head -n1` })).replace(/\s$/, '')
+              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename sauce-production-backup < /vw-data/${backupFile}` })
+            }},
+          ],
+          "restore": [
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `sudo docker stop vaultwarden` })
+              try {
+                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-shm ` })
+              } catch (error) {}
+              try {
+                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-wal ` })
+              } catch (error) {}
+              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest sauce-production-backup > ${c.data.home}/${c.data.unique}/db.sqlite3` })
+              await c.ssh.new({ command: `sudo cp ${c.data.home}/${c.data.unique}/db.sqlite3 /vw-data/db.sqlite3` })
+              await c.ssh.new({ command: `sudo docker start vaultwarden` })
+            }},
           ],
         },
-      }
-    ]
-  },
-  {
-    "name": "aliajs-production",
-    "services": [
+      },
       {
         "name": "aliajs",
         "tier": "production",
@@ -94,11 +115,17 @@ export const instances = [
         "remote_repository": "https://github.com/jdecaron/aliajs.git",
         "operations": {
           "initial": [
-            // { command: "npm install -g @bitwarden/cli", target: "new" },
-            // { command: "sudo ln -f -s <%= home %>/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
-            // { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>.pem\" > ~/.ssh/config", target: "new" },
-            // { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ~/.ssh/<%= aliajs_key_name %>.pem ubuntu@<%= address %>:.ssh/<%= aliajs_key_name %>.pem", target: "orchestrator" },
-          ]
+            { command: "npm install -g @bitwarden/cli", target: "new" },
+            { command: "sudo ln -f -s <%= home %>/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
+            { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>.pem\" > ~/.ssh/config", target: "new" },
+          ],
+          "restore": [
+            { command: async ({ c }) => {
+              const sauce =  getItem({ items: items.operations, name: c.data.aliajs_key_name }).notes
+              await c.ssh.new({ command: `echo '${sauce}' > ~/.ssh/${c.data.aliajs_key_name}.pem` })
+              await c.ssh.new({ command: `sudo chmod 400 ~/.ssh/${c.data.aliajs_key_name}.pem` })
+            }},
+          ],
         }
       }
     ]
