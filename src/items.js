@@ -157,7 +157,6 @@ try {
 
   // Production items
   items.operations = getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
-  restore()
   items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
   items.development = getItems({ variables: items.operations.variables[1] })
   items.certificates = getItems({ variables: items.operations.variables[2] })
