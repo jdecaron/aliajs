@@ -206,9 +206,9 @@ export async function nginx({ address, checkout, domain, exec, initial, home, in
 
   if (initial) {
     await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'backup' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'restore' })
   }
-  await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'backup' })
-  await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'restore' })
 
   await ssh.new({ command: 'sudo nginx -t' })
   await ssh.new({ command: 'sudo service nginx reload' })
