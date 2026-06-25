@@ -58,4 +58,6 @@ curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-pro
 curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/new-instance?address=1.1.1.1&checkout=${CHECKOUT}&instance_name=aliajs-production&replace=false"
 ```
 `address`, default `undefined`: possible values: `allocate`, `ip`: examples `address=allocate` `address=1.1.1.1`: address=allocate will request a permanent IP from the cloud provider and associate it to the new instance.
+`exclude`, optional: used to filter (exclude) operation types, examples `exclude=backup`, `exclude=initial&exclude=restore`.
 `replace`, default `false`: will replace the current running instance.
+`target`, optional: used to filter (target) operation types, examples `target=initial&target=restore`.
