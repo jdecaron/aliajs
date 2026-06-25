@@ -34,7 +34,7 @@ export const initInstance = async ({ address, instance, refresh, replace, respon
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-  instance.address = instance.address || (await lookup(`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`)).address
+
   const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name: `${name}-${Math.random().toString(36).slice(2, 8)}`, type })
   // const Reservations = [{
   //   Instances: [{
@@ -45,8 +45,16 @@ export const initInstance = async ({ address, instance, refresh, replace, respon
   instance.InstanceId = Reservations[0].Instances[0].InstanceId
   instance.PublicIpAddress = Reservations[0].Instances[0].PublicIpAddress
 
+  let currentAddress = instance.address
+  if (currentAddress === undefined) {
+    try {
+      currentAddress = (await lookup(`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`)).address
+    } catch (error) {
+      log.warn(`WARNING! Could not lookup DNS ${`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`} (it can be OK)`)
+    }
+  }
   const ssh = {
-    current: SSH({ address: instance.address, keyName, instance, response }),
+    current: SSH({ address: currentAddress, keyName, instance, response }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response }),
   }
 
