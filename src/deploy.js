@@ -117,7 +117,7 @@ export async function erpnext({ address, checkout, domain, exec, initial, home, 
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-export async function nginx({ address, checkout, domain, exec, initial, home, instance, service, ssh, user }) {
+export async function nginx({ address, checkout, domain, exec, flags, initial, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
 
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
@@ -205,9 +205,9 @@ export async function nginx({ address, checkout, domain, exec, initial, home, in
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'initial' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'backup' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, service, ssh, type: 'restore' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, service, ssh, type: 'backup' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, service, ssh, type: 'restore' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
@@ -399,15 +399,25 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
   return buildIndex
 }
 
-async function operations({ data, exec, service, ssh, type }) {
-  // TODO filter
+async function operations({ data, exec, flags, service, ssh, type }) {
   const targets = {
     current: ssh.current,
     new: ssh.new,
     orchestrator: exec
   }
 
-  if (typeof service.operations === 'object' && typeof service.operations[type] === 'object') {
+  let skip = false
+  if (flags?.exclude.length > 0 && flags.exclude.indexOf(type) > -1) {
+    skip = true
+  } else if (flags?.target.length > 0 && flags.target.indexOf(type) === -1) {
+    skip = true
+  }
+
+  if (
+    skip === false &&
+    typeof service.operations === 'object' &&
+    typeof service.operations[type] === 'object'
+  ) {
     for (let i = 0; i < service.operations[type].length; i++) {
       if (typeof service.operations[type][i].command === 'function') {
         await service.operations[type][i].command({ c: { data, exec, service, ssh, type } })
@@ -416,5 +426,7 @@ async function operations({ data, exec, service, ssh, type }) {
         await targets[service.operations[type][i].target]({ command })
       }
     }
+  } else {
+    log.warn(`WARNING! Skipping operations of type ${type} (it can be OK)`)
   }
 }

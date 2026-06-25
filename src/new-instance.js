@@ -30,7 +30,7 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-export const initInstance = async ({ address, instance, refresh, replace, response, temp }) => {
+export const initInstance = async ({ address, flags, instance, refresh, replace, response, temp }) => {
   const { imageName, name, services, type } = instance
 
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
@@ -71,6 +71,7 @@ export const initInstance = async ({ address, instance, refresh, replace, respon
     await deploy[service.type]({
       address: Reservations[0].Instances[0].PublicIpAddress,
       exec,
+      flags,
       initial: true,
       instance,
       service,
@@ -94,14 +95,14 @@ export const initInstance = async ({ address, instance, refresh, replace, respon
   return Reservations
 }
 
-export const initInstances = async ({ address, instances, replace, response }) => {
+export const initInstances = async ({ address, flags, instances, replace, response }) => {
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
 
   for (let i = 0; i < instances.length; i++) {
     const instance = instances[i]
-    const Reservations = await initInstance({ address, instance, replace, response, temp })
+    const Reservations = await initInstance({ address, flags, instance, replace, response, temp })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
