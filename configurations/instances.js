@@ -95,10 +95,10 @@ export const instances = [
             { command: async ({ c }) => {
               await c.ssh.new({ command: `sudo docker stop vaultwarden` })
               try {
-                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-shm ` })
+                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-shm` })
               } catch (error) {}
               try {
-                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-wal ` })
+                await c.ssh.new({ command: `sudo rm /vw-data/db.sqlite3-wal` })
               } catch (error) {}
               await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest sauce-production-backup > ${c.data.home}/${c.data.unique}/db.sqlite3` })
               await c.ssh.new({ command: `sudo cp ${c.data.home}/${c.data.unique}/db.sqlite3 /vw-data/db.sqlite3` })
