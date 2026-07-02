@@ -1,4 +1,5 @@
 import child_process from 'child_process'
+import ky from 'ky'
 import util from 'util'
 
 const execAsync = util.promisify(child_process.exec)
@@ -39,7 +40,7 @@ export const getCloudAPItoken = ({ cloud }) => {
 }
 
 export const getLatestNode = ({ major }) => {
-  return fetch(`https://nodejs.org/download/release/latest-v${major}.x/SHASUMS256.txt`)
+  return ky(`https://nodejs.org/download/release/latest-v${major}.x/SHASUMS256.txt`)
     .then(result => result.text())
     .then((body) => {
       return body.split(/\n/)

@@ -1,5 +1,6 @@
 import '../env.js'
 
+import ky from 'ky'
 import { fileURLToPath } from 'url'
 import logger from '../logger.js'
 
@@ -11,9 +12,9 @@ export const upsertARecord = async ({ instance, name, zone }) => {
     'Content-Type': 'application/json',
   }
 
-  const { rrsets } = await (await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets?per_page=100`, {
+  const { rrsets } = await ky(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets?per_page=100`, {
     headers,
-  })).json()
+  }).json()
 
   const filteredRrsets = rrsets.filter((rrset) => {
     return rrset.name === name
@@ -21,13 +22,13 @@ export const upsertARecord = async ({ instance, name, zone }) => {
 
   const records = [{ value: instance.PublicIpAddress }]
   if (filteredRrsets.length > 0) {
-    const deleteResult = await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets/${name}/A`, {
+    const deleteResult = await ky(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets/${name}/A`, {
       method: 'DELETE',
       headers,
     })
   }
 
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/zones/${encodeURIComponent(zone)}/rrsets`, {
     method: 'POST',
     headers,
     body: JSON.stringify({
@@ -36,15 +37,11 @@ export const upsertARecord = async ({ instance, name, zone }) => {
       ttl: 300,
       records,
     })
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner create A record: ${result.error.message}`)
-  }
+  }).json()
 }
 
 export const createImage = async ({ instance, image }) => {
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}/actions/create_image`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}/actions/create_image`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
@@ -54,74 +51,50 @@ export const createImage = async ({ instance, image }) => {
       description: image.Name,
       type: 'snapshot',
     })
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner create image: ${result.error.message}`)
-  }
+  }).json()
 
   const { image: snapshot, action } = result
   let actionStatus = action.status
   while (actionStatus === 'running') {
     await new Promise(r => setTimeout(r, 2000))
-    const actionResult = await (await fetch(`https://api.hetzner.cloud/v1/actions/${action.id}`, {
+    actionStatus = (await ky(`https://api.hetzner.cloud/v1/actions/${action.id}`, {
       headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-    })).json()
-    if (actionResult.action.status === 'error') {
-      throw new Error(`hetzner create image action: ${actionResult.action.error.message}`)
-    }
-    actionStatus = actionResult.action.status
+    }).json()).action.status
   }
 
   return { ImageId: String(snapshot.id) }
 }
 
 export const deleteInstance = async ({ instance }) => {
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner delete instance: ${result.error.message}`)
-  }
+  }).json()
 }
 
 const getSnapshotByDescription = async (description) => {
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}&sort=created:desc`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}&sort=created:desc`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner list images: ${result.error.message}`)
-  }
+  }).json()
 
   return result?.images?.[0]?.id
 }
 
 export const renameInstance = async ({ instance, name }) => {
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
     method: 'PUT',
     headers: {
       'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ name })
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner rename instance: ${result.error.message}`)
-  }
+  }).json()
 }
 
 export const describeInstances = async () => {
-  const result = await (await fetch('https://api.hetzner.cloud/v1/servers', {
+  const result = await ky('https://api.hetzner.cloud/v1/servers', {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner list servers: ${result.error.message}`)
-  }
+  }).json()
 
   return result.servers.map(server => ({
     InstanceId: String(server.id),
@@ -132,31 +105,23 @@ export const describeInstances = async () => {
 }
 
 export const associateAddress = async ({ instance, ssh }) => {
-  const listResult = await (await fetch(`https://api.hetzner.cloud/v1/floating_ips?page=1&per_page=50`, {
+  const listResult = await ky(`https://api.hetzner.cloud/v1/floating_ips?page=1&per_page=50`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-  })).json()
-
-  if (listResult.error) {
-    throw new Error(`hetzner list floating ips: ${listResult.error.message}`)
-  }
+  }).json()
 
   const floatingIp = listResult.floating_ips.find(f => f.ip === instance.address)
   if (!floatingIp) {
     throw new Error(`hetzner associate address: floating ip ${instance.address} not found`)
   }
 
-  const assignResult = await (await fetch(`https://api.hetzner.cloud/v1/floating_ips/${floatingIp.id}/actions/assign`, {
+  const assignResult = await ky(`https://api.hetzner.cloud/v1/floating_ips/${floatingIp.id}/actions/assign`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ server: Number(instance.InstanceId) })
-  })).json()
-
-  if (assignResult.error) {
-    throw new Error(`hetzner assign floating ip: ${assignResult.error.message}`)
-  }
+  }).json()
 
   await ssh.new({ command: `sudo ip addr add ${instance.address} dev eth0` })
   await ssh.new({ command: `sudo mkdir -p /etc/network/interfaces.d` })
@@ -164,30 +129,22 @@ export const associateAddress = async ({ instance, ssh }) => {
 }
 
 export const deleteImagesByDescription = async (description) => {
-  const result = await (await fetch(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-  })).json()
-
-  if (result.error) {
-    throw new Error(`hetzner list images: ${result.error.message}`)
-  }
+  }).json()
 
   for (const image of result.images) {
-    const deleteResult = await (await fetch(`https://api.hetzner.cloud/v1/images/${image.id}`, {
+    const deleteResult = await ky(`https://api.hetzner.cloud/v1/images/${image.id}`, {
       method: 'DELETE',
       headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-    })).json()
-
-    if (deleteResult.error) {
-      throw new Error(`hetzner delete image: ${deleteResult.error.message}`)
-    }
+    })
   }
 }
 
 export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const image = await getSnapshotByDescription(imageName) || process.env.ALIAJS_DEFAULT_IMAGE_ID
 
-  const response = await fetch('https://api.hetzner.cloud/v1/servers', {
+  const { server, action } = await ky('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
@@ -204,23 +161,14 @@ export const newInstance = async ({ address, imageName, keyName, instance, name,
         enable_ipv6: true,
       },
     })
-  })
+  }).json()
 
-  if (response.status >= 400) {
-    const errorResult = await response.json()
-    throw new Error(`hetzner server create: ${errorResult.error.message}`)
-  }
-
-  const { server, action } = await response.json()
   let actionStatus = action.status
   while (actionStatus === 'running') {
     await new Promise(r => setTimeout(r, 2000))
-    const actionResult = await (await fetch(`https://api.hetzner.cloud/v1/actions/${action.id}`, {
+    const actionResult = await ky(`https://api.hetzner.cloud/v1/actions/${action.id}`, {
       headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
-    })).json()
-    if (actionResult.action.status === 'error') {
-      throw new Error(`hetzner server start: ${actionResult.action.error.message}`)
-    }
+    }).json()
     actionStatus = actionResult.action.status
   }
 
