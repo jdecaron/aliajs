@@ -180,10 +180,10 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   }
 
   const env = dotenv.parse(fs.readFileSync(`${temp}/.env`))
-  items.development = getItems({ variables: items.operations.variables[0] })
+  items.items.development = items.getItems({ variables: items.items.operations.variables[0] })
   for (let name in env) {
     if (env[name] === '') {
-      variables = `${variables}\nEnvironment=${name}=${getNotes({ items: items.development, name, systemdEscape: true })}`
+      variables = `${variables}\nEnvironment=${name}=${items.getNotes({ items: items.items.development, name, systemdEscape: true })}`
     }
   }
 
