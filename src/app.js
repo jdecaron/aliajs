@@ -8,6 +8,10 @@ const log = logger(fileURLToPath(import.meta.url))
 
 const app = new Hono()
 
+app.get('/404-uc3C6', (c) => {
+  return c.notFound()
+})
+
 app.use('*', async (c, next) => {
   const authorization = c.req.header('Authorization')
   if (typeof authorization === 'string' && crypto.timingSafeEqual(Buffer.from(process.env.ALIAJS_AUTHORIZATION), Buffer.from(authorization))) {
