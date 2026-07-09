@@ -1,6 +1,6 @@
 export const instances = [
   {
-    "name": "aliajs-production",
+    "name": "sauce-production",
     "services": [
       {
         "name": "sauce",
@@ -45,6 +45,11 @@ export const instances = [
           ],
         },
       },
+    ]
+  },
+  {
+    "name": "aliajs-production",
+    "services": [
       {
         "name": "aliajs",
         "tier": "production",
@@ -65,7 +70,7 @@ export const instances = [
             }},
           ],
         }
-      }
+      },
     ]
   },
 ]
