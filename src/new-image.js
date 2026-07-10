@@ -6,6 +6,7 @@ import * as cloud from './cloud/cloud.js'
 import { install, SSH } from './utils.js'
 import * as configurations from '../configurations/images.js'
 import logger from './logger.js'
+import { operations } from './utils.js'
 
 const log = logger(fileURLToPath(import.meta.url))
 
@@ -22,12 +23,15 @@ async function newImage() {
 
     const instance = Reservations[0].Instances[0]
 
-    const ssh = SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME })
-    await install({
-      path: process.env.ALIAJS_DEFAULT_PATH,
-      major: image.major,
+    const ssh = {
+      new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME }),
+      root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME }),
+    }
+    await operations({
+      data: image.data,
+      operations: image.operations,
       ssh,
-      user: process.env.ALIAJS_DEFAULT_USER,
+      type: 'initial'
     })
 
     // Create new image.
