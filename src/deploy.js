@@ -6,11 +6,11 @@ import { Eta } from 'eta'
 import fs from 'fs'
 import https from 'https'
 import path from 'path'
-import util from 'util'
 import { fileURLToPath } from 'url'
+import util from 'util'
 import * as items from './items.js'
-import { retry } from './utils.js'
 import logger from './logger.js'
+import { operations, retry } from './utils.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -301,36 +301,4 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
     log.warn(`WARNING! ${staticBuilds}/${buildIndex} already exists, skipping this build (it can be OK)`)
   }
   return buildIndex
-}
-
-async function operations({ data, exec, flags, items, service, ssh, type }) {
-  const targets = {
-    current: ssh.current,
-    new: ssh.new,
-    orchestrator: exec
-  }
-
-  let skip = false
-  if (flags?.exclude.length > 0 && flags.exclude.indexOf(type) > -1) {
-    skip = true
-  } else if (flags?.target.length > 0 && flags.target.indexOf(type) === -1) {
-    skip = true
-  }
-
-  if (
-    skip === false &&
-    typeof service.operations === 'object' &&
-    typeof service.operations[type] === 'object'
-  ) {
-    for (let i = 0; i < service.operations[type].length; i++) {
-      if (typeof service.operations[type][i].command === 'function') {
-        await service.operations[type][i].command({ c: { data, exec, items, service, ssh, type } })
-      } else {
-        const command = eta.renderString(service.operations[type][i].command, data)
-        await targets[service.operations[type][i].target]({ command })
-      }
-    }
-  } else {
-    log.warn(`WARNING! Skipping operations of type ${type} (it can be OK)`)
-  }
 }

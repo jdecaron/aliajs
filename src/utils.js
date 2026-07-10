@@ -1,10 +1,17 @@
 import child_process from 'child_process'
+import { Eta } from 'eta'
 import ky from 'ky'
+import path from 'path'
+import { fileURLToPath } from 'url'
+import logger from './logger.js'
 import util from 'util'
 
-const execAsync = util.promisify(child_process.exec)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const log = logger(__filename)
 
-export const version = /v\d+\.\d+\.\d+/
+const execAsync = util.promisify(child_process.exec)
+const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })
 
 export const exec = async ({ command, response, secrets }) => {
   try {
@@ -33,7 +40,6 @@ export const getDomain = ({ domain }) => {
 }
 
 export const getCloudAPItoken = ({ cloud }) => {
-  console.log(cloud)
   if (cloud === 'hetzner') {
     return process.env.HETZNER_API_TOKEN
   }
@@ -129,6 +135,43 @@ export const instance = ({ instances, instance_name }) => {
   }
 }
 
+export async function operations({ data, exec, flags, items, operations, service, ssh, type }) {
+  const c = { data, exec, flags, items, service, ssh, type }
+  const targets = {
+    current: ssh.current,
+    new: ssh.new,
+    orchestrator: exec
+  }
+
+  let skip = false
+  if (flags?.exclude.length > 0 && flags.exclude.indexOf(type) > -1) {
+    skip = true
+  } else if (flags?.target.length > 0 && flags.target.indexOf(type) === -1) {
+    skip = true
+  }
+
+  if (operations === undefined) {
+    operations = service.operations
+  }
+
+  if (
+    skip === false &&
+    typeof operations === 'object' &&
+    typeof operations[type] === 'object'
+  ) {
+    for (let i = 0; i < operations[type].length; i++) {
+      if (typeof operations[type][i].command === 'function') {
+        await operations[type][i].command({ c })
+      } else {
+        const command = eta.renderString(operations[type][i].command, data)
+        await targets[operations[type][i].target]({ command })
+      }
+    }
+  } else {
+    log.warn(`WARNING! Skipping operations of type ${type} (it can be OK)`)
+  }
+}
+
 export const service = ({ instances, service_name, tier }) => {
   for (let i = 0; i < instances.length; i++) {
     for (let j = 0; j < instances[i].services.length; j++) {
@@ -177,3 +220,5 @@ qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
     }
   }
 }
+
+export const version = /v\d+\.\d+\.\d+/
