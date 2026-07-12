@@ -1,5 +1,59 @@
 export const instances = [
   {
+    "name": "erpnext-production",
+    "imageName": "aliajs-erpnext-15",
+    "services": [
+      {
+        "name": "rotatio-gateway",
+        "tier": "production",
+        "type": "nginx",
+        "domains": [
+          "rotat.io",
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "redirect": "https://erpnext-production.rotat.io/",
+          },
+        ]
+      },
+      {
+        "name": "erpnext",
+        "tier": "production",
+        "type": "erpnext",
+        "template": "frappe",
+        "domains": [
+          "erpnext-production.rotat.io",
+        ],
+        "locations": [],
+        "operations": {
+          "initial": [
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `sudo mysqladmin --user=root password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}` })
+              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench new-site --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes} --admin-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_ADMIN_PASSWORD' }).notes} erpnext-production.rotat.io` })
+            }},
+            { command: "cd <%= home %>/frappe-bench && sudo bench setup supervisor", target: "new" },
+            { command: "cd <%= home %>/frappe-bench && sudo cp config/supervisor.conf /etc/supervisor/conf.d/", target: "new" },
+            { command: "sudo supervisorctl reload", target: "new" },
+            { command: "cd <%= home %>/frappe-bench && bench get-app erpnext --branch version-15", target: "new" },
+            { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io install-app erpnext", target: "new" },
+          ],
+          // "backup": [
+          //   { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "current" },
+          //   { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress", target: "current" },
+          // ],
+          // "restore": [
+          //   { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz <%= temp %>/database.sql.gz", target: "orchestrator" },
+          //   { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
+          //   { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sql.gz ubuntu@<%= address %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz", target: "orchestrator" },
+          //   { command: `cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io restore <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
+          //   // curl --header "Authorization: token x:x" https://erpnext-production.rotat.io/api/resource/AliaJSTest/jati349euf
+          // ],
+        }
+      }
+    ]
+  },
+  {
     "name": "sauce-production",
     "services": [
       {
