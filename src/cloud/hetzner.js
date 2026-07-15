@@ -50,6 +50,9 @@ export const createImage = async ({ instance, image }) => {
     body: JSON.stringify({
       description: image.Name,
       type: 'snapshot',
+      labels: {
+        description: image.Name,
+      }
     })
   }).json()
 
@@ -73,7 +76,7 @@ export const deleteInstance = async ({ instance }) => {
 }
 
 const getSnapshotByDescription = async (description) => {
-  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}&sort=created:desc`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&sort=created:desc&label_selector=description%3D${description}`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
   }).json()
 
@@ -129,7 +132,7 @@ export const associateAddress = async ({ instance, ssh }) => {
 }
 
 export const deleteImagesByDescription = async (description) => {
-  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&description=${encodeURIComponent(description)}`, {
+  const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&label_selector=description%3D${description}`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
   }).json()
 
@@ -142,7 +145,7 @@ export const deleteImagesByDescription = async (description) => {
 }
 
 export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
-  const image = await getSnapshotByDescription(imageName) || process.env.ALIAJS_DEFAULT_IMAGE_ID
+  const image = await getSnapshotByDescription(imageName) || process.env.ALIAJS_DEFAULT_IMAGE_NAME
 
   const { server, action } = await ky('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
