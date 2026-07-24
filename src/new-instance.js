@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 import util from 'util'
 import * as cloud from './cloud/cloud.js'
 import * as deploy from './deploy.js'
-import { getNotes, items } from './items.js'
+import { getNotes, items, sauce } from './items.js'
 import { getDomain, exec, SSH } from './utils.js'
 import * as configurations from '../configurations/instances.js'
 import logger from './logger.js'
@@ -21,21 +21,22 @@ const installSSLCertificates = async ({ service, ssh }) => {
     const name = getDomain({ domain })
     const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
     const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
-    await ssh({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
+    await ssh({ command: `sudo echo '${fullchain}' > fullchain.pem`, sauce: [] })
     await ssh({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
     await ssh({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
-    await ssh({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
+    await ssh({ command: `sudo echo '${privkey}' > privkey.pem`, sauce: [] })
     await ssh({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
     await ssh({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
   }
 }
 
-export const initInstance = async ({ address, flags, instance, refresh, replace, response, temp }) => {
-  const { imageName, name, services, type } = instance
+export const initInstance = async ({ address, ephemeral, flags, instance, refresh, replace, response, temp }) => {
+  const { name, services, type } = instance
 
+  const imageName = instance.imageName || process.env.ALIAJS_DEFAULT_IMAGE_NAME
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
 
-  const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name: `${name}-${Math.random().toString(36).slice(2, 8)}`, type })
+  const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name: `${name}-${Date.now()}`, type })
   // const Reservations = [{
   //   Instances: [{
   //     InstanceId: '142769447',
@@ -54,8 +55,8 @@ export const initInstance = async ({ address, flags, instance, refresh, replace,
     }
   }
   const ssh = {
-    current: SSH({ address: currentAddress, keyName, instance, response }),
-    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response }),
+    current: SSH({ address: currentAddress, keyName, instance, response, sauce }),
+    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response, sauce }),
   }
 
   for (let item of items.operations) {
@@ -85,30 +86,52 @@ export const initInstance = async ({ address, flags, instance, refresh, replace,
     } else {
       await cloud.upsertARecord({ instance, name: instance.name, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
       for (const service of services) {
-
         await cloud.upsertARecord({ instance, name: `${service.name}-${service.tier}`, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
+        console.log(`Deployed: https://${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`)
       }
-      await new Promise(r => setTimeout(r, 5 * 60 * 1000))
+      if (ephemeral) {
+        // New name, no need to wait for the record TTL to expire
+      } else {
+        await new Promise(r => setTimeout(r, 5 * 60 * 1000))
+      }
     }
   }
 
   return Reservations
 }
 
-export const initInstances = async ({ address, flags, instances, replace, response }) => {
+export const initInstances = async ({ address, ephemeral, flags, instances, replace, response }) => {
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
 
   for (let i = 0; i < instances.length; i++) {
-    const instance = instances[i]
-    const Reservations = await initInstance({ address, flags, instance, replace, response, temp })
+    const instance = JSON.parse(JSON.stringify(instances[i]))
+
+    for (let j = 0; j < instances[i].services.length; j++) {
+      instance.services[j].operations = instances[i].services[j].operations
+      if (ephemeral) {
+        instance.name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
+        instance.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
+      }
+    }
+
+    const Reservations = await initInstance({ address, ephemeral, flags, instance, replace, response, temp })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
       for (const runningInstance of runningReservations) {
+        const split = runningInstance.name.split('-')
         if (new RegExp(`^${instance.name}-[a-z0-9]+$`).test(runningInstance.name)) {
-          await cloud.deleteInstance({ instance: runningInstance })
+          const position = split.indexOf('ephemeral')
+          if (position > -1) {
+            const timestamp = Number(split[position + 1])
+            if (Date.now() > timestamp) {
+              await cloud.deleteInstance({ instance: runningInstance })
+            }
+          } else {
+            await cloud.deleteInstance({ instance: runningInstance })
+          }
         }
       }
     }

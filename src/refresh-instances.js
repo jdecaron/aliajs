@@ -12,6 +12,7 @@ const log = logger(fileURLToPath(import.meta.url))
 async function refreshInstances() {
   try {
     await initInstances({ domains, instances, replace: true })
+    // TODO clean ephemeral DNS records
   } catch (error) {
     log.error({ error, message: 'Error refreshing instances', channel: 'operations' })
   }

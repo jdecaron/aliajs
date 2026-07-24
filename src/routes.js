@@ -35,12 +35,12 @@ router.get('/deploy', (c) => {
 })
 
 router.get('/new-instance', (c) => {
-  let { address, instance_name, replace } = c.req.query()
+  let { address, ephemeral, instance_name, replace } = c.req.query()
   return streamText(c, async (stream) => {
     try {
       const flags = { exclude: c.req.queries('exclude') || [], target: c.req.queries('target') || [] }
       if (typeof replace === 'string' && replace.match(/^true$/i)) replace = true
-      await initInstances({ address, flags, instances: [utils.instance({ instances, instance_name })], replace, response: stream })
+      await initInstances({ address, ephemeral, flags, instances: [utils.instance({ instances, instance_name })], replace, response: stream })
     } catch (error) {
       log.error({ error, message: `Error creating new instance ${instance_name}`, channel: 'operations' })
       await stream.write(`\x1b[31m${error}\x1b[0m\n`)
