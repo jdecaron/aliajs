@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url'
 import util from 'util'
 import * as cloud from './cloud/cloud.js'
 import * as deploy from './deploy.js'
-import { getNotes, items } from './items.js'
+import { getNotes, items, sauce } from './items.js'
 import { getDomain, exec, SSH } from './utils.js'
 import * as configurations from '../configurations/instances.js'
 import logger from './logger.js'
@@ -21,10 +21,10 @@ const installSSLCertificates = async ({ service, ssh }) => {
     const name = getDomain({ domain })
     const fullchain = getNotes({ items: items.certificates, name: `${name}/fullchain.pem` })
     const privkey = getNotes({ items: items.certificates, name: `${name}/privkey.pem` })
-    await ssh({ command: `sudo echo '${fullchain}' > fullchain.pem`, secrets: [] })
+    await ssh({ command: `sudo echo '${fullchain}' > fullchain.pem`, sauce: [] })
     await ssh({ command: `sudo mv fullchain.pem /etc/ssl/certs/${domain}.pem` })
     await ssh({ command: `sudo chmod 622 /etc/ssl/certs/${domain}.pem` })
-    await ssh({ command: `sudo echo '${privkey}' > privkey.pem`, secrets: [] })
+    await ssh({ command: `sudo echo '${privkey}' > privkey.pem`, sauce: [] })
     await ssh({ command: `sudo mv privkey.pem /etc/ssl/private/${domain}.pem` })
     await ssh({ command: `sudo chmod 600 /etc/ssl/private/${domain}.pem` })
   }
@@ -55,8 +55,8 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
     }
   }
   const ssh = {
-    current: SSH({ address: currentAddress, keyName, instance, response }),
-    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response }),
+    current: SSH({ address: currentAddress, keyName, instance, response, sauce }),
+    new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response, sauce }),
   }
 
   for (let item of items.operations) {

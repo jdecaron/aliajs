@@ -3,7 +3,7 @@ import './env.js'
 import child_process from 'child_process'
 import { fileURLToPath } from 'url'
 import * as cloud from './cloud/cloud.js'
-import { getItem, getNotes, items, setItems } from './items.js'
+import { getItem, getNotes, items, sauce, setItems } from './items.js'
 import { getCloudAPItoken, getDomain, exec, SSH } from './utils.js'
 import { domains } from '../configurations/domains.js'
 import logger from './logger.js'
@@ -20,7 +20,7 @@ export const renewCertificates = async () => {
   const instance = Reservations[0].Instances[0]
 
   const ssh = {
-    current: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME }),
+    current: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce }),
   }
 
   for (let i = 0; i < domains.length; i++) {
@@ -39,16 +39,16 @@ export const renewCertificates = async () => {
       const zone = domain
       await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
       await ssh.current({ command: `chmod a+x ${temp}/*.sh` })
-      await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, secrets: [ token ] })
+      await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, sauce: [ token ] })
     } else {
-      await ssh.current({ command: `sudo certbot certonly -n -m certbot@${host.host} --agree-tos --nginx --force-renewal ${list}`, secrets: [] })
+      await ssh.current({ command: `sudo certbot certonly -n -m certbot@${host.host} --agree-tos --nginx --force-renewal ${list}`, sauce: [] })
     }
     const editedItems = []
     const files = [ 'privkey.pem', 'fullchain.pem' ]
     for (let j = 0; j < files.length; j++) {
       const fileName = files[j]
       const item = getItem({ items: items.certificates, name: `${domain}/${fileName}` })
-      item.notes = await ssh.current({ command: `sudo cat /etc/letsencrypt/live/${host.host}/${fileName}`, secrets: [] })
+      item.notes = await ssh.current({ command: `sudo cat /etc/letsencrypt/live/${host.host}/${fileName}`, sauce: [] })
       editedItems.push(item)
     }
     setItems({ index: 2, items: editedItems })

@@ -13,24 +13,24 @@ const log = logger(__filename)
 const execAsync = util.promisify(child_process.exec)
 const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })
 
-export const exec = async ({ command, response, secrets }) => {
+export const exec = async ({ command, response, sauce }) => {
   try {
-    let hidden = hide({ target: command, secrets })
+    let hidden = hide({ target: command, sauce })
     console.log('\x1b[33m%s\x1b[0m', hidden)
     typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
     const { stdout } = (await execAsync(command, { maxBuffer: 1024 * 1024 * 4 }))
-    hidden = hide({ target: stdout, secrets })
+    hidden = hide({ target: stdout, sauce })
     console.log(hidden)
     typeof response === 'object' && response.write(`${hidden}\n`)
     return stdout
   } catch (error) {
-    throw hide({ target: error, secrets })
+    throw hide({ target: error, sauce })
   }
 }
 
-export const EXEC = ({ response }) => {
-  return async function ({ command, secrets }) {
-    return exec({ command, response, secrets })
+export const EXEC = ({ response, sauce }) => {
+  return async function ({ command, sauce }) {
+    return exec({ command, response, sauce })
   }
 }
 
@@ -60,19 +60,17 @@ export const getLatestNode = ({ major }) => {
     })
 }
 
-function hide({ target, secrets }) {
-  return target // TODO temporary debug line
-  // Empty secrets array will hide everything.
-  if (secrets === undefined) {
+function hide({ target, sauce }) {
+  if (sauce === undefined || process.env.ALIAJS_SHOW_SAUCE === 'show') {
     return target
   }
   let result = target
   if (typeof target === 'object' && typeof target.message === 'string') {
     result = target.message
   }
-  if (secrets.length > 0) {
-    for (let i = 0; i < secrets.length; i++) {
-      const secret = secrets[i]
+  if (sauce.length > 0) {
+    for (let i = 0; i < sauce.length; i++) {
+      const secret = sauce[i]
       result = result.split(secret).join(Array(secret.length).join('*'))
     }
   } else {
@@ -135,8 +133,8 @@ export const instance = ({ instances, instance_name }) => {
   }
 }
 
-export async function operations({ data, exec, flags, items, operations, service, ssh, type }) {
-  const c = { data, exec, flags, items, service, ssh, type }
+export async function operations({ data, exec, flags, items, operations, sauce, service, ssh, type }) {
+  const c = { data, exec, flags, items, sauce: items.sauce, service, ssh, type }
   const targets = {
     current: ssh.current,
     new: ssh.new,
@@ -198,11 +196,11 @@ export async function retry(fn, { retries = 10, factor = 2, minTimeout = 1000, m
   }
 }
 
-export const SSH = ({ address, keyName, instance, response }) => {
-  return async function ({ command, secrets, user }) {
+export const SSH = ({ address, keyName, instance, response, sauce }) => {
+  return async function ({ command, sauce, user }) {
     user = user || process.env.ALIAJS_DEFAULT_USER
     try {
-      let hidden = hide({ target: command, secrets })
+      let hidden = hide({ target: command, sauce })
       console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
@@ -211,12 +209,12 @@ echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
       stdout = stdout.slice(stdout.indexOf('6DFqRyWxivCaZxp4MCWLgX') + 23)
-      hidden = hide({ target: stdout, secrets })
+      hidden = hide({ target: stdout, sauce })
       typeof response === 'object' && response.write(`${hidden}\n`)
       console.log(hidden)
       return stdout
     } catch (error) {
-      throw hide({ target: error, secrets })
+      throw hide({ target: error, sauce })
     }
   }
 }

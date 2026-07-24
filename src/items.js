@@ -140,11 +140,16 @@ function validate() {
   }
 }
 
+
+export const sauce = []
+
 function variables() {
   const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
   for (let key in parsed) {
     if (process.env[key] === '') {
-      process.env[key] = getItem({ items: items.operations, name: key }).notes
+      const item = getItem({ items: items.operations, name: key }).notes
+      sauce.push(item)
+      process.env[key] = item
     }
   }
 }
