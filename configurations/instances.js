@@ -29,8 +29,8 @@ export const instances = [
         "operations": {
           "initial": [
             { command: async ({ c }) => {
-              await c.ssh.new({ command: `sudo mysqladmin --user=root password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}` })
-              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench new-site --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes} --admin-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_ADMIN_PASSWORD' }).notes} erpnext-production.rotat.io` })
+              await c.ssh.new({ command: `sudo mysqladmin --user=root password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, sauce: c.sauce  })
+              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench new-site --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes} --admin-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_ADMIN_PASSWORD' }).notes} erpnext-production.rotat.io`, sauce: c.sauce })
             }},
             { command: "cd <%= home %>/frappe-bench && sudo bench setup supervisor", target: "new" },
             { command: "cd <%= home %>/frappe-bench && sudo cp config/supervisor.conf /etc/supervisor/conf.d/", target: "new" },
@@ -38,17 +38,20 @@ export const instances = [
             { command: "cd <%= home %>/frappe-bench && bench get-app erpnext --branch version-15", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io install-app erpnext", target: "new" },
           ],
-          // "backup": [
-          //   { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "current" },
-          //   { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress", target: "current" },
-          // ],
-          // "restore": [
-          //   { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ubuntu@<%= server_name %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz <%= temp %>/database.sql.gz", target: "orchestrator" },
-          //   { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
-          //   { command: "scp -q -i ~/.ssh/<%= aliajs_key_name %>.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null <%= temp %>/database.sql.gz ubuntu@<%= address %>:<%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz", target: "orchestrator" },
-          //   { command: `cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io restore <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${getItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, target: "new" },
-          //   // curl --header "Authorization: token x:x" https://erpnext-production.rotat.io/api/resource/AliaJSTest/jati349euf
-          // ],
+          "backup": [
+            { command: async ({ c }) => {
+              await c.ssh.current({ command: `mkdir ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true` })
+              await c.ssh.current({ command: `cd ${c.data.home}/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress` })
+              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename erpnext-production < ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
+            }},
+          ],
+          "restore": [
+            { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest erpnext-production > ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
+              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench --site erpnext-production.rotat.io restore ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, sauce: c.sauce })
+            }},
+          ],
         }
       }
     ]
