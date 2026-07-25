@@ -1,7 +1,7 @@
 import './env.js'
 
 import { fileURLToPath } from 'url'
-import { sauce } from  './items.js'
+import * as items from  './items.js'
 import * as cloud from './cloud/cloud.js'
 import { install, SSH } from './utils.js'
 import * as configurations from '../configurations/images.js'
@@ -24,11 +24,12 @@ async function newImage() {
     const instance = Reservations[0].Instances[0]
 
     const ssh = {
-      new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce }),
-      root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce }),
+      new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
+      root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
     }
     await operations({
       data: image.data,
+      items,
       operations: image.operations,
       ssh,
       type: 'initial'
