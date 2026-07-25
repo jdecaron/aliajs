@@ -60,7 +60,7 @@ export const images = [
       return {
         initial: templates[process.env.ALIAJS_DEFAULT_IMAGE_NAME].initial.concat(
           { command: "sudo apt-get update", target: "new" },
-          { command: "sudo apt-get -y install git python-is-python3 python3-dev python3-pip redis-server pkg-config", target: "new" },
+          { command: "sudo apt-get -y install file git python-is-python3 python3-dev python3-pip redis-server pkg-config", target: "new" },
           { command: "sudo apt-get -y install mariadb-server mariadb-client libmariadb-dev", target: "new" },
           { command: "sudo apt-get -y install supervisor", target: "new" },
           { command: "sudo apt-get -y install python3.12-venv", target: "new" },
