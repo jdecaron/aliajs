@@ -42,13 +42,13 @@ export const instances = [
             { command: async ({ c }) => {
               await c.ssh.current({ command: `mkdir ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true` })
               await c.ssh.current({ command: `cd ${c.data.home}/frappe-bench && bench --site erpnext-production.rotat.io backup --backup-path-db ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --compress` })
-              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename erpnext-production < ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
+              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename erpnext-production --tag erpnext-production < ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
             }},
           ],
           "restore": [
             { command: "mkdir <%= home %>/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups || true", target: "new" },
             { command: async ({ c }) => {
-              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest erpnext-production > ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
+              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest erpnext-production --tag erpnext-production > ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz`, sauce: c.sauce })
               await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench --site erpnext-production.rotat.io restore ${c.data.home}/frappe-bench/sites/erpnext-production.rotat.io/private/aliajs-backups/database.sql.gz --db-root-username root --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, sauce: c.sauce })
             }},
           ],
