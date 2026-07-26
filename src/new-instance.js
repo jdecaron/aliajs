@@ -106,12 +106,13 @@ export const initInstances = async ({ address, ephemeral, flags, instances, repl
   const runningReservations = await cloud.describeInstances()
 
   for (let i = 0; i < instances.length; i++) {
-    const instance = JSON.parse(JSON.stringify(instances[i]))
+    let instance = instances[i]
 
-    for (let j = 0; j < instances[i].services.length; j++) {
-      instance.services[j].operations = instances[i].services[j].operations
-      if (ephemeral) {
-        instance.name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
+    if (ephemeral) {
+      instance = JSON.parse(JSON.stringify(instances[i]))
+      instance.name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
+      for (let j = 0; j < instances[i].services.length; j++) {
+        instance.services[j].operations = instances[i].services[j].operations
         instance.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
       }
     }
