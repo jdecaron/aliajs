@@ -31,20 +31,10 @@ const installSSLCertificates = async ({ service, ssh }) => {
 }
 
 export const initInstance = async ({ address, ephemeral, flags, instance, refresh, replace, response, temp }) => {
-  const { name, services, type } = instance
+  const { services, type } = instance
 
   const imageName = instance.imageName || process.env.ALIAJS_DEFAULT_IMAGE_NAME
   const keyName = instance.keyName || process.env.ALIAJS_KEY_NAME
-
-  const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name: `${name}-${Date.now()}`, type })
-  // const Reservations = [{
-  //   Instances: [{
-  //     InstanceId: '142769447',
-  //     PublicIpAddress: '5.78.180.28',
-  //   }],
-  // }]
-  instance.InstanceId = Reservations[0].Instances[0].InstanceId
-  instance.PublicIpAddress = Reservations[0].Instances[0].PublicIpAddress
 
   let currentAddress = instance.address
   if (currentAddress === undefined) {
@@ -54,6 +44,22 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
       log.warn(`WARNING! Could not lookup DNS ${`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`} (it can be OK)`)
     }
   }
+
+  let name = `${instance.name}-${Date.now()}`
+  if (ephemeral) {
+    name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
+  }
+
+  const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name, type })
+  // const Reservations = [{
+  //   Instances: [{
+  //     InstanceId: '142769447',
+  //     PublicIpAddress: '5.78.180.28',
+  //   }],
+  // }]
+  instance.InstanceId = Reservations[0].Instances[0].InstanceId
+  instance.PublicIpAddress = Reservations[0].Instances[0].PublicIpAddress
+
   const ssh = {
     current: SSH({ address: currentAddress, keyName, instance, response, sauce }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response, sauce }),
@@ -110,7 +116,6 @@ export const initInstances = async ({ address, ephemeral, flags, instances, repl
 
     if (ephemeral) {
       instance = JSON.parse(JSON.stringify(instances[i]))
-      instance.name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
       for (let j = 0; j < instances[i].services.length; j++) {
         instance.services[j].operations = instances[i].services[j].operations
         instance.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
