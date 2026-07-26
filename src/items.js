@@ -155,19 +155,19 @@ function variables() {
 }
 
 try {
-  // Development items
-  // restore()
-  // items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
-  // console.log(items)
-
-  // Production items
-  items.operations = getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
-  items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
-  items.development = getItems({ variables: items.operations.variables[1] })
-  items.certificates = getItems({ variables: items.operations.variables[2] })
-  backup({ data: JSON.stringify(items) })
-  // console.log(items)
-
+  if (process.env.ALIAJS_RESTORE_SAUCE === 'restore') {
+    restore()
+    items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
+  } else {
+    items.operations = getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
+    items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
+    items.development = getItems({ variables: items.operations.variables[1] })
+    items.certificates = getItems({ variables: items.operations.variables[2] })
+    backup({ data: JSON.stringify(items) })
+  }
+  if (process.env.ALIAJS_SHOW_SAUCE === 'show') {
+    console.log(items)
+  }
   variables()
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
