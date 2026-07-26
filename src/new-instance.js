@@ -48,6 +48,7 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
   let name = `${instance.name}-${Date.now()}`
   if (ephemeral) {
     name = `${instance.name}-ephemeral-${Date.now() + (24 * 60 * 60 * 1000)}`
+    instance.name = name
   }
 
   const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name, type })
