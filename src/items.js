@@ -12,10 +12,16 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const log = logger(__filename)
 
+
+export const sauce = []
+
 export const getItem = ({ items, name }) => {
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     if (item.name === name) {
+      if (item?.notes !== undefined && sauce.indexOf(item?.notes) === -1) {
+        sauce.push(item?.notes)
+      }
       return item
     }
   }
@@ -140,8 +146,6 @@ function validate() {
   }
 }
 
-
-export const sauce = []
 
 function variables() {
   const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
