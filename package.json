@@ -1,9 +1,31 @@
 {
   "name": "aliajs",
   "version": "0.1.0",
+  "description": "Infrastructure as code with JavaScript",
+  "keywords": [
+    "aliajs",
+    "cloud",
+    "iac",
+    "infrastructure-as-code",
+    "continous-operations",
+    "devops",
+    "devsecops",
+    "provisioning"
+  ],
+  "homepage": "https://aliajs.com",
+  "bugs": {
+    "url": "https://github.com/jdecaron/aliajs/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jdecaron/aliajs.git"
+  },
+  "license": "MIT",
+  "author": "JD Caron",
   "type": "module",
-  "engines": {
-    "node": ">=18"
+  "main": "src/main.js",
+  "directories": {
+    "doc": "docs"
   },
   "scripts": {
     "dev": "node --watch-path=./src ./src/main.js"
@@ -15,5 +37,9 @@
     "eta": "^3.5.0",
     "hono": "^4.7.7",
     "ky": "^2.0.2"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=18"
   }
 }
