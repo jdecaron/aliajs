@@ -61,4 +61,4 @@ curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-pro
 `ephemeral`, default `false`: create a new ephemeral instance with a new unique DNS.\
 `exclude`, optional: used to filter (exclude) operation types, examples `exclude=backup`, `exclude=initial&exclude=restore`.\
 `replace`, default `false`: will replace the current running instance.\
-`target`, optional: used to filter (target) operation types, examples `target=initial&target=restore`.\
+`target`, optional: used to filter (target) operation types, examples `target=initial&target=restore`.
