@@ -140,6 +140,38 @@ export const associateAddress = async ({ instance, ssh }) => {
   await ssh.new({ command: `echo 'auto eth0:1\niface eth0:1 inet static\n    address ${instance.address}\n    netmask 255.255.255.255' | sudo tee /etc/network/interfaces.d/60-my-floating-ip.cfg` })
 }
 
+const createServer = async ({ name, server_type, image, location, keyName }) => {
+  console.log('createServer', {
+    name,
+    server_type,
+    image,
+    location,
+    ssh_keys: [keyName],
+    public_net: {
+      enable_ipv4: true,
+      enable_ipv6: true,
+    },
+  })
+  return await ky('https://api.hetzner.cloud/v1/servers', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      name,
+      server_type,
+      image,
+      location,
+      ssh_keys: [keyName],
+      public_net: {
+        enable_ipv4: true,
+        enable_ipv6: true,
+      },
+    })
+  }).json()
+}
+
 export const deleteImagesByDescription = async (description) => {
   const result = await ky(`https://api.hetzner.cloud/v1/images?type=snapshot&label_selector=description%3D${description}`, {
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
@@ -153,27 +185,57 @@ export const deleteImagesByDescription = async (description) => {
   }
 }
 
+const mapFallback = ({ fallback }) => {
+  if (fallback[0] === 'type') {
+    fallback[0] = 'name'
+  }
+  return fallback
+}
+
+const fallbackInstance = async ({ instance, location, server_type }) => {
+  if (instance?.fallback) {
+    const response = await ky(`https://api.hetzner.cloud/v1/server_types?name=&page=1&per_page=50`, {
+      headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
+    }).json()
+    const instances = response.server_types
+    for (let i = 0; i < instance?.fallback?.length; i++) {
+      let fallback = instance.fallback[i]
+      let filteredInstances = []
+      let filteredLocations = []
+      if (fallback === 'location') {
+        filteredInstances = instances.filter((instance) => { return instance.name === server_type })
+        filteredLocations = filteredInstances[0].locations.filter(((candidateLocation) => { return candidateLocation.available }))
+      } else {
+        fallback = mapFallback({ fallback })
+        filteredInstances = instances.filter((instance) => { return instance[fallback[0]] === fallback[1] })
+        filteredLocations = filteredInstances[0].locations.filter(((candidateLocation) => { return candidateLocation.name === location && candidateLocation.available }))
+      }
+      if (filteredLocations?.length > 0) {
+        location = filteredLocations[0].name
+        server_type = filteredInstances[0].name
+        i = Infinity
+      }
+    }
+  }
+  location = location || process.env.ALIAJS_DEFAULT_LOCATION
+  server_type = server_type || process.env.ALIAJS_DEFAULT_TYPE
+  return { location, server_type }
+}
+
 export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const image = await getImageByName({ imageName })
+  let location = instance?.location || process.env.ALIAJS_DEFAULT_LOCATION
+  let server_type = type || process.env.ALIAJS_DEFAULT_TYPE
 
-  const { server, action } = await ky('https://api.hetzner.cloud/v1/servers', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      name,
-      server_type: type || process.env.ALIAJS_DEFAULT_TYPE,
-      image,
-      location: process.env.ALIAJS_DEFAULT_REGION,
-      ssh_keys: [keyName],
-      public_net: {
-        enable_ipv4: true,
-        enable_ipv6: true,
-      },
-    })
-  }).json()
+  try {
+    console.log('try createServer', { name, server_type, image, location, keyName })
+    var { server, action } = await createServer({ name, server_type, image, location, keyName })
+  } catch (error) {
+    log.warn(`WARNING! Could not create server for type ${server_type}, location ${location}, trying fallback ${JSON.stringify(instance?.fallback)} (it can be OK)`)
+    const fallback = await fallbackInstance({ instance, location, server_type })
+    console.log('catch createServer', { name, server_type: fallback.server_type, image, location: fallback.location, keyName })
+    var { server, action } = await createServer({ name, server_type: fallback.server_type, image, location: fallback.location, keyName })
+  }
 
   let actionStatus = action.status
   while (actionStatus === 'running') {

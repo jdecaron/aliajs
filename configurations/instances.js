@@ -1,6 +1,9 @@
 export const instances = [
   {
     "name": "sauce-production",
+    "fallback": ["location", ["type", "cpx22"]],
+    "location": "hel1",
+    "type": "cx23",
     "services": [
       {
         "name": "sauce",
