@@ -141,17 +141,6 @@ export const associateAddress = async ({ instance, ssh }) => {
 }
 
 const createServer = async ({ name, server_type, image, location, keyName }) => {
-  console.log('createServer', {
-    name,
-    server_type,
-    image,
-    location,
-    ssh_keys: [keyName],
-    public_net: {
-      enable_ipv4: true,
-      enable_ipv6: true,
-    },
-  })
   return await ky('https://api.hetzner.cloud/v1/servers', {
     method: 'POST',
     headers: {
@@ -228,12 +217,10 @@ export const newInstance = async ({ address, imageName, keyName, instance, name,
   let server_type = type || process.env.ALIAJS_DEFAULT_TYPE
 
   try {
-    console.log('try createServer', { name, server_type, image, location, keyName })
     var { server, action } = await createServer({ name, server_type, image, location, keyName })
   } catch (error) {
     log.warn(`WARNING! Could not create server for type ${server_type}, location ${location}, trying fallback ${JSON.stringify(instance?.fallback)} (it can be OK)`)
     const fallback = await fallbackInstance({ instance, location, server_type })
-    console.log('catch createServer', { name, server_type: fallback.server_type, image, location: fallback.location, keyName })
     var { server, action } = await createServer({ name, server_type: fallback.server_type, image, location: fallback.location, keyName })
   }
 
