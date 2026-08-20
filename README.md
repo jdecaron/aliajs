@@ -25,7 +25,7 @@ If you or your team care about JavaScript, then maybe AliaJS is a solution for y
 [./src/app.js](./src/app.js), [./src/main.js](./src/main.js) & [./src/routes.js](./src/routes.js): Main Express.js files that define the server.
 
 [./src/deploy.js](./src/deploy.js): Update a service that is up and running.
-[./src/new-image.js](./src/new-image.js): Create & keep updated the EC2 virtual machines according to the scheduled job (104 lines).
+[./src/new-image.js](./src/new-image.js): Create & keep updated the virtual machine images according to the scheduled job (104 lines).
 [./src/new-instance.js](./src/new-instance.js): Create new instances according to its definition in [./configurations/instances.js](./configurations/instances.js) (302 lines).
 [./src/renew-certificates.js](./src/renew-certificates.js): Create & keep updated the SSL certificates (46 lines).
 
@@ -53,7 +53,7 @@ npm run dev
 curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/deploy?checkout=${CHECKOUT}&service_name=aliajs&tier=production"
 ```
 
-**Starting new EC2 instances:**
+**Starting new instances:**
 ```bash
 curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/new-instance?address=1.1.1.1&checkout=${CHECKOUT}&instance_name=aliajs-production&replace=false"
 ```
