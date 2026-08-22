@@ -207,14 +207,14 @@ const fallbackInstance = async ({ instance, location, server_type }) => {
     }
   }
   location = location || process.env.ALIAJS_DEFAULT_LOCATION
-  server_type = server_type || process.env.ALIAJS_DEFAULT_TYPE
+  server_type = server_type || process.env.ALIAJS_DEFAULT_INSTANCE_TYPE
   return { location, server_type }
 }
 
 export const newInstance = async ({ address, imageName, keyName, instance, name, type }) => {
   const image = await getImageByName({ imageName })
   let location = instance?.location || process.env.ALIAJS_DEFAULT_LOCATION
-  let server_type = type || process.env.ALIAJS_DEFAULT_TYPE
+  let server_type = type || process.env.ALIAJS_DEFAULT_INSTANCE_TYPE
 
   try {
     var { server, action } = await createServer({ name, server_type, image, location, keyName })

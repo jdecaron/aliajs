@@ -18,7 +18,7 @@ async function newImage() {
       imageName: image.ImageId,
       keyName: process.env.ALIAJS_KEY_NAME,
       name: 'aliajs-new-image',
-      type: process.env.ALIAJS_DEFAULT_TYPE,
+      type: process.env.ALIAJS_DEFAULT_INSTANCE_TYPE,
     })
 
     const instance = Reservations[0].Instances[0]

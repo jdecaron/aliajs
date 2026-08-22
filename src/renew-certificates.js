@@ -15,7 +15,7 @@ export const renewCertificates = async () => {
     imageName: process.env.ALIAJS_DEFAULT_IMAGE_NAME,
     keyName: process.env.ALIAJS_KEY_NAME,
     name: 'aliajs-renew-certificates',
-    type: process.env.ALIAJS_DEFAULT_TYPE,
+    type: process.env.ALIAJS_DEFAULT_INSTANCE_TYPE,
   })
   const instance = Reservations[0].Instances[0]
 
