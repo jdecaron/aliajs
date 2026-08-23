@@ -12,14 +12,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const log = logger(__filename)
 
-
+export const not = ['ALIAJS_DEFAULT_CLOUD', 'ALIAJS_DEFAULT_INSTANCE_TYPE', 'ALIAJS_DEFAULT_LOCATION', 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', 'ALIAJS_DEFAULT_S3_URL', 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN']
 export const sauce = []
 
 export const getItem = ({ items, name }) => {
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     if (item.name === name) {
-      if (item?.notes !== undefined && sauce.indexOf(item?.notes) === -1) {
+      if (not.indexOf(name) === -1 && item?.notes !== undefined && sauce.indexOf(item?.notes) === -1) {
         sauce.push(item?.notes)
       }
       return item
