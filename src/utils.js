@@ -1,4 +1,5 @@
 import child_process from 'child_process'
+import crypto from 'crypto'
 import { Eta } from 'eta'
 import ky from 'ky'
 import path from 'path'
@@ -58,6 +59,19 @@ export const getLatestNode = ({ major }) => {
           return { checksum: line[0], file: line[1], path: line[1].match(/.*[^\.tar\.xz$]/)[0], version: line[1].match(version)[0] }
         })[0]
     })
+}
+
+export const getUniqueString = ({ characters, length }) => {
+  if (characters === undefined) {
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  }
+
+  const password = Array.from(
+    { length },
+    () => { return characters[crypto.randomInt(characters.length)] }
+  ).join('')
+
+  return password
 }
 
 function hide({ target, sauce }) {
@@ -125,12 +139,62 @@ export const installNode = ({ path, latestNode, major }) => {
   ]
 }
 
+export const cloneInstance = ({ ephemeral, instance }) => {
+  const instanceClone = JSON.parse(JSON.stringify(instance))
+  for (let j = 0; j < instance.services.length; j++) {
+    {
+      // Previous instance clone
+      // instanceClone.services[j].operations = instance.services[j].operations
+      // was in conflict with new.js
+      // instanceClone.services[0].operations.backup = []
+      // since .operations was a parent reference, re-assigning to a child
+      // affect the reference ... other solutions would be to deepFreeze instances
+      // in instances.js ... or exploring structuredClone with operations transfer options ...
+      instanceClone.services[j].operations = {}
+      const referenceOperations = instance.services[j].operations
+      for (const operation in referenceOperations) {
+        if (Object.hasOwn(referenceOperations, operation)) {
+          instanceClone.services[j].operations[operation] = referenceOperations[operation]
+        }
+      }
+    }
+    if (ephemeral) {
+      instanceClone.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
+    }
+  }
+  return instanceClone
+}
+
+export function deepFreeze(object) {
+  const propNames = Reflect.ownKeys(object)
+
+  for (const name of propNames) {
+    const value = object[name]
+
+    if ((value && typeof value === "object") || typeof value === "function") {
+      deepFreeze(value)
+    }
+  }
+
+  return Object.freeze(object)
+}
+
+export function importItems({ items }) {
+  const addedType = items.map((item) => { return { type: 2, ...item } })
+  return JSON.stringify({ items: addedType })
+}
+
 export const instance = ({ instances, instance_name }) => {
   for (let i = 0; i < instances.length; i++) {
     if (instances[i].name === instance_name) {
       return instances[i]
     }
   }
+}
+
+export async function lazyImport({ specifier, baseURL }) {
+  const resolved = new URL(specifier, baseURL).href
+  return import(`${resolved}?update=${Date.now()}`)
 }
 
 export async function operations({ data, exec, flags, items, operations, sauce, service, ssh, type }) {
@@ -183,6 +247,10 @@ export const service = ({ instances, service_name, tier }) => {
   }
 }
 
+export function delay(timeout) {
+  return new Promise(resolve => setTimeout(resolve, timeout))
+}
+
 export async function retry(fn, { retries = 10, factor = 2, minTimeout = 1000, maxTimeout = Infinity, randomize = true } = {}) {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -191,7 +259,7 @@ export async function retry(fn, { retries = 10, factor = 2, minTimeout = 1000, m
       if (attempt >= retries) throw error
       const random = randomize ? Math.random() + 1 : 1
       const timeout = Math.min(random * minTimeout * Math.pow(factor, attempt), maxTimeout)
-      await new Promise((resolve) => setTimeout(resolve, timeout))
+      await delay(timeout)
     }
   }
 }
@@ -204,7 +272,7 @@ export const SSH = ({ address, keyName, instance, response, sauce }) => {
       console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-      let stdout = (await execAsync(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+      let stdout = (await execAsync(`ssh -T -q -i ~/.ssh/${keyName} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
@@ -220,3 +288,20 @@ qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
 }
 
 export const version = /v\d+\.\d+\.\d+/
+
+export async function waitForInstance({ ssh, user }) {
+  const seconds = 10
+  const limit = (60 / seconds) * 5 // Every ten seconds for 5 minutes
+  for (let i = 0; i < limit; i++) {
+    try {
+      console.log(`Waiting instance for ${i * seconds} seconds` )
+      await ssh.new({ command: `date`, user })
+      i = Infinity
+    } catch (error) {
+      if (i > limit) {
+        throw Error(`waitForInstance: waited for more than ${i * 10} seconds`)
+      }
+    }
+    await delay(1000 * seconds)
+  }
+}

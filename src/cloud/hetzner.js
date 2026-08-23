@@ -1,10 +1,36 @@
 import '../env.js'
 
+import aws4 from 'aws4'
 import ky from 'ky'
 import { fileURLToPath } from 'url'
 import logger from '../logger.js'
 
 const log = logger(fileURLToPath(import.meta.url))
+
+export const createBucket = async ({ name, region = process.env.ALIAJS_DEFAULT_LOCATION }) => {
+  const host = `${region}.your-objectstorage.com`
+
+  const opts = {
+    host,
+    path: `/${name}`,
+    method: 'PUT',
+    service: 's3',
+    region,
+  }
+
+  // aws4 signs the request options in place, adding the headers
+  aws4.sign(opts, {
+    accessKeyId: process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID,
+    secretAccessKey: process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY,
+  })
+
+  await ky(`https://${host}/${name}`, {
+    method: 'PUT',
+    headers: opts.headers,
+  })
+
+  return `s3:https://${host}/${name}`
+}
 
 export const upsertARecord = async ({ instance, name, zone }) => {
   const headers = {
@@ -36,6 +62,23 @@ export const upsertARecord = async ({ instance, name, zone }) => {
       type: 'A',
       ttl: 300,
       records,
+    })
+  }).json()
+}
+
+export const upsertDNSZone = async ({ name }) => {
+  const headers = {
+    'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}`,
+    'Content-Type': 'application/json',
+  }
+
+  const result = await ky(`https://api.hetzner.cloud/v1/zones`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      name,
+      mode: 'primary',
+      ttl: 300,
     })
   }).json()
 }
@@ -72,6 +115,17 @@ export const deleteInstance = async ({ instance }) => {
   const result = await ky(`https://api.hetzner.cloud/v1/servers/${instance.InstanceId}`, {
     method: 'DELETE',
     headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` }
+  }).json()
+}
+
+export const createKey = async ({ key }) => {
+  const result = await ky(`https://api.hetzner.cloud/v1/ssh_keys`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${process.env.HETZNER_API_TOKEN}` },
+    body: JSON.stringify({
+      name: key.name,
+      public_key: key.value,
+    })
   }).json()
 }
 

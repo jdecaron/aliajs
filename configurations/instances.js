@@ -10,7 +10,7 @@ export const instances = [
         "tier": "production",
         "type": "nginx",
         "domains": [
-          "sauce.rotat.io",
+          `sauce.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
         ],
         "locations": [
           {
@@ -23,7 +23,7 @@ export const instances = [
             { command: "sudo apt-get -y install restic", target: "new" },
             { command: "sudo apt-get -y install docker-compose", target: "new" },
             { command: "sudo docker pull vaultwarden/server:latest", target: "new" },
-            { command: "sudo docker run  --detach --name vaultwarden --env DOMAIN=\"https://sauce-production.rotat.io\" --env LOGIN_RATELIMIT_MAX_BURST=20 --volume /vw-data/:/data/ --restart unless-stopped --publish 127.0.0.1:8000:80 vaultwarden/server:latest", target: "new" },
+            { command: `sudo docker run  --detach --name vaultwarden --env DOMAIN="https://sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}" --env LOGIN_RATELIMIT_MAX_BURST=40 --volume /vw-data/:/data/ --restart unless-stopped --publish 127.0.0.1:8000:80 vaultwarden/server:latest`, target: "new" },
           ],
           "backup": [
             { command: async ({ c }) => {
@@ -64,13 +64,13 @@ export const instances = [
             { command: "npm install -g @bitwarden/cli", target: "new" },
             { command: "sudo ln -f -s <%= home %>/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
             { command: `bw config server https://sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, target: "new" },
-            { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>.pem\" > ~/.ssh/config", target: "new" },
+            { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>\" > ~/.ssh/config", target: "new" },
           ],
           "restore": [
             { command: async ({ c }) => {
               const sauce =  c.items.getItem({ items: c.items.items.operations, name: c.data.aliajs_key_name }).notes
-              await c.ssh.new({ command: `echo '${sauce}' > ~/.ssh/${c.data.aliajs_key_name}.pem` })
-              await c.ssh.new({ command: `sudo chmod 400 ~/.ssh/${c.data.aliajs_key_name}.pem` })
+              await c.ssh.new({ command: `echo '${sauce}' > ~/.ssh/${c.data.aliajs_key_name}` })
+              await c.ssh.new({ command: `sudo chmod 400 ~/.ssh/${c.data.aliajs_key_name}` })
             }},
           ],
         }
