@@ -1,0 +1,195 @@
+process.env.ALIAJS_BOOTSTRAP_MODE = 'bootstrap'
+import './env.js'
+
+// SAUCE TRICK
+
+import child_process from 'child_process'
+import fs from 'fs'
+import os from 'os'
+import { isCancel, cancel, password, select } from '@clack/prompts'
+import * as cloud from './cloud/cloud.js'
+import { items, setItem } from  './items.js'
+import { newImage } from './new-image.js'
+import * as utils from './utils.js'
+
+// TODO WARNING!!! Radio, proceed with caution, second step, understand the risk, running on new project
+
+// TODO SSH public key
+// TODO check against other tools to see what they do to manage ssh access ... Capistrano, Pulumi,
+// ? maybe ? https://claude.ai/chat/14e0ed8b-6e32-4792-b472-beffa6dc963a
+// ssh-keygen -t ed25519 -C "process.env.ALIAJS_KEY_NAME" -f ~/.ssh/process.env.ALIAJS_KEY_NAME
+// cat ~/.ssh/process.env.ALIAJS_KEY_NAME .pub
+
+let value = await select({
+  message: 'Set your default cloud provider. (only hetzner for now)',
+  options: [
+    { value: 'HETZNER', label: 'Hetzner' },
+  ],
+})
+
+if (isCancel(value)) {
+    cancel('Operation cancelled')
+    process.exit(0)
+}
+
+process.env.ALIAJS_DEFAULT_CLOUD = value
+setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_CLOUD', notes: value })
+
+// value = await password({
+//   message: `What is your ${value} API key (token)?`,
+// })
+
+// if (isCancel(value)) {
+//   cancel('Operation cancelled')
+//   process.exit(0)
+// }
+// TODO
+value = process.env.TEMP_API_TOKEN // TODO
+
+process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] = value
+setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`, notes: value })
+
+// Leaving low hanging fruits for the community 🫐
+{
+  value = await select({
+    message: 'Set your default cloud location.',
+    options: [
+      { value: 'fsn1', label: 'Falkenstein' },
+      { value: 'nbg1', label: 'Nuremberg' },
+      { value: 'hel1', label: 'Helsinki' },
+      { value: 'ash', label: 'Ashburn' },
+      { value: 'hil', label: 'Hillsboro' },
+      { value: 'sin', label: 'Singapore' },
+    ],
+  })
+
+  if (isCancel(value)) {
+    cancel('Operation cancelled')
+  }
+
+  process.env.ALIAJS_DEFAULT_LOCATION = value
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_LOCATION', notes: value })
+}
+
+{
+  // Leaving low hanging fruits for the community 🍑
+  value = await select({
+    message: 'Set your default cloud machine type.',
+    options: [
+      { value: 'cx23', label: 'CX23, 2VCPUS, 4GB' },
+    ],
+  })
+
+  if (isCancel(value)) {
+    cancel('Operation cancelled')
+    process.exit(0)
+  }
+
+  process.env.ALIAJS_DEFAULT_INSTANCE_TYPE = value
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_INSTANCE_TYPE', notes: value })
+}
+
+{
+  process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN = 'roulance.com' // TODO ask for ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
+}
+
+{
+  process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID = process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID // TODO
+  process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY = process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY // TODO
+  const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 3 })
+  await cloud.createBucket({ name: `${process.env.APP_NAME}-${uniqueString}-bucket` })
+}
+
+let key
+{
+  process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-key.pem`
+  const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
+  child_process.execSync(`rm -f ~/.ssh/2026-*`)
+  child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
+
+  key = utils.deepFreeze({
+    name: process.env.ALIAJS_KEY_NAME,
+    value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
+  })
+  await cloud.createKey({ key })
+  // process.env.ALIAJS_KEY_NAME = `2026-09-11-aliajs-key.pem` // TODO
+}
+
+await newImage()
+
+{
+  await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
+}
+
+
+const { domains } = await utils.lazyImport({
+  specifier: '../configurations/domains.js',
+  baseURL: import.meta.url,
+})
+
+{
+  for (const domain of domains) {
+    const files = [ 'privkey.pem', 'fullchain.pem' ]
+    for (let j = 0; j < files.length; j++) {
+      const fileName = files[j]
+      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: '' })
+    }
+  }
+
+  const { renewCertificates } = await utils.lazyImport({
+    specifier: './renew-certificates.js',
+    baseURL: import.meta.url,
+  })
+  await renewCertificates()
+}
+
+{
+  const { instances } = await utils.lazyImport({
+    specifier: '../configurations/instances.js',
+    baseURL: import.meta.url,
+  })
+  const instance = utils.instance({ instances, instance_name: 'sauce-production' })
+  const instanceClone = utils.cloneInstance({ instance })
+  instanceClone.services[0].operations.restore = [
+    { command: async ({ c }) => {
+      const { newItems } = await utils.lazyImport({
+        specifier: './puppeteer/items.js',
+        baseURL: import.meta.url,
+      })
+      const operationsPassword = utils.getUniqueString({ length: 16 })
+      const developmentPassword = utils.getUniqueString({ length: 16 })
+      const certificatesPassword = utils.getUniqueString({ length: 16 })
+      const variables = []
+      const accounts = [
+        { email: `sauce-certificates@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.certificates, password: certificatesPassword, variables },
+        { email: `sauce-development@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.development, password: developmentPassword, variables },
+        { email: `sauce-operations@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.operations, password: operationsPassword, type: 'operations', variables },
+      ]
+
+      await c.ssh.new({ command: 'sudo nginx -t' })
+      await c.ssh.new({ command: 'sudo service nginx reload' })
+      console.log('Save these accounts informations in your personal secure information vault 🔐')
+      for (let account of accounts) {
+        try {
+          console.log(`\nAccount: ${account.email}\nPassword: ${account.password}`)
+          await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, type: account.type, variables: account.variables })
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }},
+  ]
+
+  {
+    const { initInstances } = await utils.lazyImport({
+      specifier: './new-instance.js',
+      baseURL: import.meta.url,
+    })
+    await initInstances({ instances: [instanceClone], replace: true })
+  }
+}
+
+{
+  process.env.ALIAJS_BOOTSTRAP_MODE = undefined
+  await initInstances({ domains, instances, replace: true })
+}

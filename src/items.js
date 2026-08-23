@@ -12,10 +12,11 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const log = logger(__filename)
 
-export const not = ['ALIAJS_DEFAULT_CLOUD', 'ALIAJS_DEFAULT_INSTANCE_TYPE', 'ALIAJS_DEFAULT_LOCATION', 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', 'ALIAJS_DEFAULT_S3_URL', 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN']
+export const not = ['ALIAJS_DEFAULT_CLOUD', 'ALIAJS_DEFAULT_INSTANCE_TYPE', 'ALIAJS_DEFAULT_LOCATION', 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', 'ALIAJS_DEFAULT_S3_URL', 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', 'ALIAJS_KEY_NAME']
 export const sauce = []
 
 export const getItem = ({ items, name }) => {
+  console.log('getItem', name, items.length, items)
   for (let i = 0; i < items.length; i++) {
     const item = items[i]
     if (item.name === name) {
@@ -42,69 +43,112 @@ export const getNotes = ({ items, name, systemdEscape }) => {
 }
 
 export const getItems = ({ variables }) => {
-  const env = Object.assign({}, process.env, {
-    BW_CLIENTID: variables[0],
-    BW_CLIENTSECRET: variables[1],
-    BW_PASSWORD: variables[2],
-  })
-
-  try {
-    child_process.execSync('bw logout', { stdio: 'ignore' })
-  } catch (error) {
-    // Ignoring this error, 'bw logout' is run only to prevent a login attempt
-    // below on an already logged in Bitwarden client.
-  }
-
   let items = []
-  try {
-    child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
-    env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
-    child_process.execSync('bw sync', { env, encoding: 'utf8' })
-    const result = child_process.execSync('bw list items', { env, encoding: 'utf8' })
-    items = JSON.parse(result)
-    child_process.execSync('bw logout')
-  } catch (error) {
-    log.error({ error, channel: 'operations' })
-    child_process.execSync('bw logout')
-    throw Error(`getItems: Could not get items for '${variables?.[0]}'`)
-  }
+  if (process.env.ALIAJS_BOOTSTRAP_MODE === undefined) {
+    const env = Object.assign({}, process.env, {
+      BW_CLIENTID: variables[0],
+      BW_CLIENTSECRET: variables[1],
+      BW_PASSWORD: variables[2],
+    })
 
-  if (items.length === 0) {
-    throw Error(`getItems: items.length === 0 for '${variables?.[0]}'`)
+    try {
+      child_process.execSync('bw logout', { stdio: 'ignore' })
+    } catch (error) {
+      // Ignoring this error, 'bw logout' is run only to prevent a login attempt
+      // below on an already logged in Bitwarden client.
+    }
+
+    try {
+      child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
+      env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
+      child_process.execSync('bw sync', { env, encoding: 'utf8' })
+      const result = child_process.execSync('bw list items', { env, encoding: 'utf8' })
+      items = JSON.parse(result)
+      child_process.execSync('bw logout')
+    } catch (error) {
+      log.error({ error, channel: 'operations' })
+      child_process.execSync('bw logout')
+      throw Error(`getItems: Could not get items for '${variables?.[0]}'`)
+    }
+
+    if (items.length === 0) {
+      throw Error(`getItems: items.length === 0 for '${variables?.[0]}'`)
+    }
   }
 
   return items
 }
 
-export const setItems = ({ index, items: itemsToSet }) => {
-  const variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))[index]
-  const env = Object.assign({}, process.env, {
-    BW_CLIENTID: variables[0],
-    BW_CLIENTSECRET: variables[1],
-    BW_PASSWORD: variables[2],
+export const setItem = ({ items, name, notes }) => {
+  console.log('setItem', items, name, notes)
+  items.push({
+    name,
+    notes
   })
+  console.log('items', items)
+}
 
-  try {
-    child_process.execSync('bw logout', { stdio: 'ignore' })
-  } catch (error) {
-    // Ignoring this error, 'bw logout' is run only to prevent a login attempt
-    // below on an already logged in Bitwarden client.
-  }
+// TODO
+/*
+  # 1. Search for the item by name
+  ITEM=$(bw get item "My Note Name" 2>/dev/null)
 
-  let item
-  try {
-    child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
-    env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
-    for (let i = 0; i < itemsToSet.length; i++) {
-      item = itemsToSet[i]
-      child_process.execSync( `bw edit item ${item.id} ${Buffer.from(JSON.stringify(item)).toString('base64')}`, { env, encoding: 'utf8' })
+  if [ -z "$ITEM" ]; then
+  # 2. Item does not exist — CREATE it
+  bw get template item | \
+  jq '.type = 2 | .name = "My Note Name" | .notes = "My note content" | .secureNote.type = 0' | \
+  bw encode | \
+  bw create item
+  else
+  # 3. Item exists — EDIT it
+  ITEM_ID=$(echo $ITEM | jq -r '.id')
+  echo $ITEM | \
+  jq '.notes = "My updated note content"' | \
+  bw encode | \
+  bw edit item $ITEM_ID
+  fi
+
+*/
+
+export const setItems = ({ index, items: itemsToSet }) => {
+  console.log('setItems 🔥', index)
+  console.log(items)
+  if (process.env.ALIAJS_BOOTSTRAP_MODE === 'bootstrap') {
+    console.log('bootstrap 🥾')
+    for (let i = itemsToSet.length - 1; i >= 0; i--) {
+      console.log('itemsToSet', i, itemsToSet[i]);
+      setItem({ items: itemsToSet, name: itemsToSet[i].name, notes: itemsToSet[i].notes });
     }
-    child_process.execSync('bw logout')
-  } catch (error) {
-    const message = `setItems: Could not set items. Current item name '${item?.name}'`
-    log.error({ error, message, channel: 'operations' })
-    child_process.execSync('bw logout')
-    throw Error(message)
+  } else {
+    const variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))[index]
+    const env = Object.assign({}, process.env, {
+      BW_CLIENTID: variables[0],
+      BW_CLIENTSECRET: variables[1],
+      BW_PASSWORD: variables[2],
+    })
+
+    try {
+      child_process.execSync('bw logout', { stdio: 'ignore' })
+    } catch (error) {
+      // Ignoring this error, 'bw logout' is run only to prevent a login attempt
+      // below on an already logged in Bitwarden client.
+    }
+
+    let item
+    try {
+      child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
+      env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
+      for (let i = 0; i < itemsToSet.length; i++) {
+        item = itemsToSet[i]
+        child_process.execSync( `bw edit item ${item.id} ${Buffer.from(JSON.stringify(item)).toString('base64')}`, { env, encoding: 'utf8' })
+      }
+      child_process.execSync('bw logout')
+    } catch (error) {
+      const message = `setItems: Could not set items. Current item name '${item?.name}'`
+      log.error({ error, message, channel: 'operations' })
+      child_process.execSync('bw logout')
+      throw Error(message)
+    }
   }
 }
 
@@ -118,7 +162,7 @@ export const validations = {
   operations: {},
 }
 
-function backup({ data }) {
+export function backup({ data }) {
   const key = crypto.createHash('sha512').update(process.env.ALIAJS_VARIABLE_2).digest('hex').substring(0, 32)
   const encryptionIV = crypto.randomBytes(16)
   const cipher = crypto.createCipheriv('aes-256-cbc', key, encryptionIV)
@@ -146,7 +190,6 @@ function validate() {
   }
 }
 
-
 function variables() {
   const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
   for (let key in parsed) {
@@ -158,10 +201,18 @@ function variables() {
   }
 }
 
+// TODO
+// if (import.meta.main) {
+//     newImage()
+// }
 try {
   if (process.env.ALIAJS_RESTORE_SAUCE === 'restore') {
     restore()
     items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
+  } else if (process.env.ALIAJS_BOOTSTRAP_MODE === undefined) {
+    items.operations = []
+    items.development = []
+    items.certificates = []
   } else {
     items.operations = getItems({ variables: [process.env.ALIAJS_VARIABLE_0, process.env.ALIAJS_VARIABLE_1, process.env.ALIAJS_VARIABLE_2] })
     items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
@@ -172,7 +223,8 @@ try {
   if (process.env.ALIAJS_SHOW_SAUCE === 'show') {
     console.log(items)
   }
-  variables()
+  // TODO
+  // variables()
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
 

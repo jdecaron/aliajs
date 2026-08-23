@@ -28,7 +28,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "node --watch-path=./src ./src/main.js"
+    "dev": "node --watch-path=./src ./src/main.js",
+    "new": "node ./src/new.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
@@ -39,6 +40,11 @@
     "ky": "^2.0.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22.18.0"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.7.0",
+    "aws4": "^1.13.2",
+    "puppeteer": "^25.9.0"
   }
 }

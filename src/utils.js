@@ -1,4 +1,5 @@
 import child_process from 'child_process'
+import crypto from 'crypto'
 import { Eta } from 'eta'
 import ky from 'ky'
 import path from 'path'
@@ -58,6 +59,19 @@ export const getLatestNode = ({ major }) => {
           return { checksum: line[0], file: line[1], path: line[1].match(/.*[^\.tar\.xz$]/)[0], version: line[1].match(version)[0] }
         })[0]
     })
+}
+
+export const getUniqueString = ({ characters, length }) => {
+  if (characters === undefined) {
+    characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  }
+
+  const password = Array.from(
+    { length },
+    () => { return characters[crypto.randomInt(characters.length)] }
+  ).join('')
+
+  return password
 }
 
 function hide({ target, sauce }) {
@@ -125,12 +139,50 @@ export const installNode = ({ path, latestNode, major }) => {
   ]
 }
 
+export const cloneInstance = ({ ephemeral, instance }) => {
+  const instanceClone = JSON.parse(JSON.stringify(instance))
+  for (let j = 0; j < instance.services.length; j++) {
+    instanceClone.services[j].operations = instance.services[j].operations
+    if (ephemeral) {
+      instanceClone.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
+    }
+  }
+  return instanceClone
+}
+
+export function deepFreeze(object) {
+  const propNames = Reflect.ownKeys(object)
+
+  for (const name of propNames) {
+    const value = object[name]
+
+    if ((value && typeof value === "object") || typeof value === "function") {
+      deepFreeze(value)
+    }
+  }
+
+  return Object.freeze(object)
+}
+
+export function importItems({ items }) {
+  import('util').then(util => { console.log(util.inspect(items, { depth: Infinity })) })
+  import('util').then(util => { console.log(util.inspect({ items: items.map((item) => { return { type: 2, ...item } }) }, { depth: Infinity })) })
+  const addedType = items.map((item) => { return { type: 2, ...item } })
+  return JSON.stringify({ items: addedType })
+}
+
 export const instance = ({ instances, instance_name }) => {
   for (let i = 0; i < instances.length; i++) {
     if (instances[i].name === instance_name) {
       return instances[i]
     }
   }
+}
+
+export async function lazyImport({ specifier, baseURL }) {
+  const resolved = new URL(specifier, baseURL).href
+  console.log('lazyImport', `${resolved}?update=${Date.now()}`)
+  return import(`${resolved}?update=${Date.now()}`)
 }
 
 export async function operations({ data, exec, flags, items, operations, sauce, service, ssh, type }) {
@@ -204,7 +256,13 @@ export const SSH = ({ address, keyName, instance, response, sauce }) => {
       console.log('\x1b[33m%s\x1b[0m', `${address}`)
       console.log('\x1b[33m%s\x1b[0m', `${hidden}`)
       typeof response === 'object' && response.write(`\x1b[33m${hidden}\x1b[0m\n`)
-      let stdout = (await execAsync(`ssh -T -q -i ~/.ssh/${keyName}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+      console.log(
+        `ssh -T -q -i ~/.ssh/${keyName} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
+echo '6DFqRyWxivCaZxp4MCWLgX'
+${command}
+qvKZVk5t1VB9B3UP2DmVNU`
+      )
+      let stdout = (await execAsync(`ssh -T -q -i ~/.ssh/${keyName} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null ${user}@${address} <<'qvKZVk5t1VB9B3UP2DmVNU'
 echo '6DFqRyWxivCaZxp4MCWLgX'
 ${command}
 qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout

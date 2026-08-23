@@ -7,10 +7,32 @@ import { getItem, getNotes, items, sauce, setItems } from './items.js'
 import { getCloudAPItoken, getDomain, exec, SSH } from './utils.js'
 import { domains } from '../configurations/domains.js'
 import logger from './logger.js'
+import { temp } from '/Users/jean-deniscaron/dev/temp-turnkey/cert.js' // TODO
 
 const log = logger(fileURLToPath(import.meta.url))
 
 export const renewCertificates = async () => {
+  { // TODO delete block {}
+    for (let i = 0; i < domains.length; i++) {
+      const host = domains[i]
+      const domain = getDomain({ domain: host.host })
+
+      const editedItems = []
+      const files = [ 'privkey.pem', 'fullchain.pem' ]
+      for (let j = 0; j < files.length; j++) {
+        const fileName = files[j]
+        const item = getItem({ items: items.certificates, name: `${domain}/${fileName}` })
+        // item.notes = await ssh.current({ command: `sudo cat /etc/letsencrypt/live/${host.host}/${fileName}`, sauce: [] })
+        item.notes = temp[`${host.host}/${fileName}`]
+        editedItems.push(item)
+      }
+      console.log('setItems 💚', { index: 2, items: editedItems })
+      setItems({ index: 2, items: editedItems })
+    }
+    console.log(111111)
+    return
+  } // TODO
+  console.log(222222)
   const { Reservations } = await cloud.newInstance({
     imageName: process.env.ALIAJS_DEFAULT_IMAGE_NAME,
     keyName: process.env.ALIAJS_KEY_NAME,
@@ -37,7 +59,7 @@ export const renewCertificates = async () => {
       const temp = (await ssh.current({ command: 'mktemp -d' })).replace(/\s$/, '')
       const token = getCloudAPItoken({ cloud: host.cloud })
       const zone = domain
-      await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
+      await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
       await ssh.current({ command: `chmod a+x ${temp}/*.sh` })
       await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, sauce: [ token ] })
     } else {
@@ -49,12 +71,16 @@ export const renewCertificates = async () => {
       const fileName = files[j]
       const item = getItem({ items: items.certificates, name: `${domain}/${fileName}` })
       item.notes = await ssh.current({ command: `sudo cat /etc/letsencrypt/live/${host.host}/${fileName}`, sauce: [] })
+      // item.notes = temp[`${host.host}/${fileName}`] // TODO
       editedItems.push(item)
     }
+    console.log('setItems 💚', { index: 2, items: editedItems }) // TODO
     setItems({ index: 2, items: editedItems })
   }
 
   await cloud.deleteInstance({ instance })
 }
 
-renewCertificates()
+if (import.meta.main) {
+  renewCertificates()
+}

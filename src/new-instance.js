@@ -7,7 +7,7 @@ import util from 'util'
 import * as cloud from './cloud/cloud.js'
 import * as deploy from './deploy.js'
 import { getNotes, items, sauce } from './items.js'
-import { getDomain, exec, SSH } from './utils.js'
+import { cloneInstance, getDomain, exec, SSH } from './utils.js'
 import * as configurations from '../configurations/instances.js'
 import logger from './logger.js'
 
@@ -54,8 +54,8 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
   const { Reservations } = await cloud.newInstance({ address, imageName, keyName, instance, name, type })
   // const Reservations = [{
   //   Instances: [{
-  //     InstanceId: '142769447',
-  //     PublicIpAddress: '5.78.180.28',
+  //     InstanceId: '165220983',
+  //     PublicIpAddress: '95.217.133.195',
   //   }],
   // }]
   instance.InstanceId = Reservations[0].Instances[0].InstanceId
@@ -116,11 +116,7 @@ export const initInstances = async ({ address, ephemeral, flags, instances, repl
     let instance = instances[i]
 
     if (ephemeral) {
-      instance = JSON.parse(JSON.stringify(instances[i]))
-      for (let j = 0; j < instances[i].services.length; j++) {
-        instance.services[j].operations = instances[i].services[j].operations
-        instance.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
-      }
+      instance = cloneInstance({ ephemeral, instance })
     }
 
     const Reservations = await initInstance({ address, ephemeral, flags, instance, replace, response, temp })
