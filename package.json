@@ -38,7 +38,6 @@
     "hono": "^4.7.7",
     "ky": "^2.0.2"
   },
-  "devDependencies": {},
   "engines": {
     "node": ">=18"
   }
