@@ -5,6 +5,7 @@ export const instances = [
     "services": [
       {
         "name": "rotatio-gateway",
+        "fallback": ["location", ["type", "cpx22"]],
         "tier": "production",
         "type": "nginx",
         "domains": [
@@ -37,6 +38,7 @@ export const instances = [
             { command: "sudo supervisorctl reload", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench get-app erpnext --branch version-15", target: "new" },
             { command: "cd <%= home %>/frappe-bench && bench --site erpnext-production.rotat.io install-app erpnext", target: "new" },
+            { command: "cd <%= home %>/frappe-bench && bench build", target: "new" },
           ],
           "backup": [
             { command: async ({ c }) => {
