@@ -68,6 +68,7 @@ export const images = [
           { command: "sudo ln -f -s <%= path %>/opt/node-v*/bin/yarn /usr/bin/yarn", target: "new" },
           { command: "sudo pip3 install --break-system-packages frappe-bench", target: "new" },
           { command: "cd <%= path %> && bench init frappe-bench --frappe-branch version-15", target: "new" },
+          { command: "cd <%= path %>/frappe-bench && bench build", target: "new" },
         )
       }
     })(),
