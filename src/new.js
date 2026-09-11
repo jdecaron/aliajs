@@ -161,9 +161,9 @@ const { domains } = await utils.lazyImport({
       const certificatesPassword = utils.getUniqueString({ length: 16 })
       const variables = []
       const accounts = [
-        { email: `sauce-certificates@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.certificates, password: certificatesPassword, variables },
-        { email: `sauce-development@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.development, password: developmentPassword, variables },
-        { email: `sauce-operations@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.operations, password: operationsPassword, type: 'operations', variables },
+        { email: `sauce-certificates@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.certificates, password: certificatesPassword },
+        { email: `sauce-development@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.development, password: developmentPassword },
+        { email: `sauce-operations@${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, items: items.operations, password: operationsPassword, type: 'operations' },
       ]
 
       await c.ssh.new({ command: 'sudo nginx -t' })
@@ -172,11 +172,19 @@ const { domains } = await utils.lazyImport({
       for (let account of accounts) {
         try {
           console.log(`\nAccount: ${account.email}\nPassword: ${account.password}`)
-          await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, type: account.type, variables: account.variables })
+          await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, type: account.type, variables })
         } catch (error) {
           console.error(error)
         }
       }
+
+      process.env.ALIAJS_VARIABLE_0 = variables[0][0]
+      process.env.ALIAJS_VARIABLE_1 = variables[0][1]
+      process.env.ALIAJS_VARIABLE_2 = variables[0][2]
+
+      await c.ssh.new({ command: `sudo docker exec vaultwarden /vaultwarden backup` })
+      const backupFile = (await c.ssh.new({ command: `ls -t /vw-data/ | head -n1` })).replace(/\s$/, '')
+      await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename sauce-production-backup --tag sauce-production-backup < /vw-data/${backupFile}`, sauce: c.sauce })
     }},
   ]
 
