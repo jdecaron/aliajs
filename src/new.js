@@ -150,6 +150,9 @@ const { domains } = await utils.lazyImport({
   })
   const instance = utils.instance({ instances, instance_name: 'sauce-production' })
   const instanceClone = utils.cloneInstance({ instance })
+
+  instanceClone.services[0].operations.backup = []
+
   instanceClone.services[0].operations.restore = [
     { command: async ({ c }) => {
       const { newItems } = await utils.lazyImport({
