@@ -98,8 +98,12 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
   process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY = process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY // TODO
   const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 3 })
   process.env.ALIAJS_DEFAULT_S3_URL = await cloud.createBucket({ name: `${process.env.APP_NAME}-${uniqueString}-bucket` })
+
+
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', notes: process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID })
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY', notes: process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY })
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_URL', notes: process.env.ALIAJS_DEFAULT_S3_URL })
   console.log('🪣', process.env.ALIAJS_DEFAULT_S3_URL)
-  // restic -r s3:s3.us-east-1.amazonaws.com/bucket_name init
 }
 
 let key
@@ -121,6 +125,10 @@ await newImage()
 
 {
   await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
+}
+
+{
+  setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: utils.getUniqueString({ length: 32 }) })
 }
 
 
