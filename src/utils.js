@@ -142,7 +142,22 @@ export const installNode = ({ path, latestNode, major }) => {
 export const cloneInstance = ({ ephemeral, instance }) => {
   const instanceClone = JSON.parse(JSON.stringify(instance))
   for (let j = 0; j < instance.services.length; j++) {
-    instanceClone.services[j].operations = instance.services[j].operations
+    {
+      // Previous instance clone
+      // instanceClone.services[j].operations = instance.services[j].operations
+      // was in conflict with new.js
+      // instanceClone.services[0].operations.backup = []
+      // since .operations was a parent reference, re-assigning to a child
+      // affect the reference ... other solutions would be to deepFreeze instances
+      // in instances.js ... or exploring structuredClone with operations transfer options ...
+      instanceClone.services[j].operations = {}
+      const referenceOperations = instance.services[j].operations
+      for (const operation in referenceOperations) {
+        if (Object.hasOwn(referenceOperations, operation)) {
+          instanceClone.services[j].operations[operation] = referenceOperations[operation]
+        }
+      }
+    }
     if (ephemeral) {
       instanceClone.services[j].tier = `${instance.services[j].tier}-ephemeral-${Date.now()}`
     }

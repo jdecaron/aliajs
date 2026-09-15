@@ -183,6 +183,7 @@ const { domains } = await utils.lazyImport({
         }
       }
 
+      items.operations.variables = variables
       process.env.ALIAJS_VARIABLE_0 = variables[0][0]
       process.env.ALIAJS_VARIABLE_1 = variables[0][1]
       process.env.ALIAJS_VARIABLE_2 = variables[0][2]
