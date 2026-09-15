@@ -118,6 +118,7 @@ let key
     value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
   })
   await cloud.createKey({ key })
+  setItem({ items: items.operations, name: 'ALIAJS_KEY_NAME', notes: process.env.ALIAJS_KEY_NAME })
   // process.env.ALIAJS_KEY_NAME = `2026-09-11-aliajs-key.pem` // TODO
 }
 
@@ -125,12 +126,13 @@ await newImage()
 
 {
   await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
 }
 
 {
   setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: utils.getUniqueString({ length: 32 }) })
+  setItem({ items: items.operations, name: 'RESTORE_VALIDATION', notes: 'f659c85a' })
 }
-
 
 const { domains } = await utils.lazyImport({
   specifier: '../configurations/domains.js',
