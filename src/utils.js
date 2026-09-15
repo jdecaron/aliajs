@@ -235,6 +235,10 @@ export const service = ({ instances, service_name, tier }) => {
   }
 }
 
+export function delay(timeout) {
+  return new Promise(resolve => setTimeout(resolve, timeout))
+}
+
 export async function retry(fn, { retries = 10, factor = 2, minTimeout = 1000, maxTimeout = Infinity, randomize = true } = {}) {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -243,7 +247,7 @@ export async function retry(fn, { retries = 10, factor = 2, minTimeout = 1000, m
       if (attempt >= retries) throw error
       const random = randomize ? Math.random() + 1 : 1
       const timeout = Math.min(random * minTimeout * Math.pow(factor, attempt), maxTimeout)
-      await new Promise((resolve) => setTimeout(resolve, timeout))
+      await delay(timeout)
     }
   }
 }
@@ -278,3 +282,21 @@ qvKZVk5t1VB9B3UP2DmVNU`, { maxBuffer: 1024 * 1024 * 4 })).stdout
 }
 
 export const version = /v\d+\.\d+\.\d+/
+
+export async function waitForInstance({ ssh, user }) {
+  console.log('waitForInstance')
+  const seconds = 10
+  const limit = (60 / seconds) * 5 // Every ten seconds for 5 minutes
+  for (let i = 0; i < limit; i++) {
+    try {
+      console.log(`Waiting instance for ${i * seconds} seconds` )
+      await ssh.new({ command: `date`, user })
+      i = Infinity
+    } catch (error) {
+      if (i > limit) {
+        throw Error(`waitForInstance: waited for more than ${i * 10} seconds`)
+      }
+    }
+    await delay(1000 * seconds)
+  }
+}

@@ -6,7 +6,7 @@ import * as cloud from './cloud/cloud.js'
 import { install, SSH } from './utils.js'
 import * as configurations from '../configurations/images.js'
 import logger from './logger.js'
-import { operations } from './utils.js'
+import { operations, waitForInstance } from './utils.js'
 
 const log = logger(fileURLToPath(import.meta.url))
 
@@ -27,7 +27,8 @@ export async function newImage() {
             new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
             root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
         }
-        await operations({
+      await waitForInstance({ ssh, user: 'root' })
+      await operations({
             data: image.data,
             items,
             operations: image.operations,

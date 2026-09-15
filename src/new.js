@@ -104,20 +104,20 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 
 let key
 {
-  // process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-key.pem`
-  // const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
-  // child_process.execSync(`rm -f ~/.ssh/2026-*`)
-  // child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
+  process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-key.pem`
+  const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
+  child_process.execSync(`rm -f ~/.ssh/2026-*`)
+  child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
 
-  // key = utils.deepFreeze({
-  //   name: process.env.ALIAJS_KEY_NAME,
-  //   value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
-  // })
-  // await cloud.createKey({ key })
-  process.env.ALIAJS_KEY_NAME = `2026-09-11-aliajs-key.pem` // TODO
+  key = utils.deepFreeze({
+    name: process.env.ALIAJS_KEY_NAME,
+    value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
+  })
+  await cloud.createKey({ key })
+  // process.env.ALIAJS_KEY_NAME = `2026-09-11-aliajs-key.pem` // TODO
 }
 
-// await newImage()
+await newImage()
 
 {
   await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })

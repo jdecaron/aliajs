@@ -28,6 +28,8 @@ export const createBucket = async ({ name, region = process.env.ALIAJS_DEFAULT_L
     method: 'PUT',
     headers: opts.headers,
   })
+
+  return `s3:https://${host}/${name}`
 }
 
 export const upsertARecord = async ({ instance, name, zone }) => {
