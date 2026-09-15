@@ -200,8 +200,8 @@ const { domains } = await utils.lazyImport({
       baseURL: import.meta.url,
     })
     await initInstances({ instances: [instanceClone], replace: true })
-  }
 
-  process.env.ALIAJS_BOOTSTRAP_MODE = undefined
-  await initInstances({ domains, instances, replace: true })
+    process.env.ALIAJS_BOOTSTRAP_MODE = undefined
+    await initInstances({ domains, instances, replace: true })
+  }
 }
