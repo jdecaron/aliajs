@@ -91,6 +91,7 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 
 {
   process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN = 'roulance.com' // TODO ask for ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN
+  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
 }
 
 {
@@ -109,6 +110,7 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 let key
 {
   process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-key.pem`
+  setItem({ items: items.operations, name: 'ALIAJS_KEY_NAME', notes: process.env.ALIAJS_KEY_NAME })
   const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
   child_process.execSync(`rm -f ~/.ssh/2026-*`)
   child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
@@ -118,20 +120,23 @@ let key
     value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
   })
   await cloud.createKey({ key })
-  setItem({ items: items.operations, name: 'ALIAJS_KEY_NAME', notes: process.env.ALIAJS_KEY_NAME })
-  // process.env.ALIAJS_KEY_NAME = `2026-09-11-aliajs-key.pem` // TODO
 }
 
 await newImage()
 
 {
   await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
-  setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
 }
 
 {
-  setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: utils.getUniqueString({ length: 32 }) })
-  setItem({ items: items.operations, name: 'RESTORE_VALIDATION', notes: 'f659c85a' })
+  process.env.RESTORE_VALIDATION = 'f659c85a'
+  setItem({ items: items.operations, name: 'restore_validation', notes: 'f659c85a' })
+  setItem({ items: items.development, name: 'restore_validation', notes: 'f659c85a' })
+  setItem({ items: items.certificates, name: 'restore_validation', notes: 'f659c85a' })
+
+  // Bootstrap environment variables for application instances
+  process.env.ALIAJS_AUTHORIZATION = utils.getUniqueString({ length: 32 })
+  setItem({ items: items.development, name: 'ALIAJS_AUTHORIZATION', notes: process.env.ALIAJS_AUTHORIZATION })
 }
 
 const { domains } = await utils.lazyImport({
