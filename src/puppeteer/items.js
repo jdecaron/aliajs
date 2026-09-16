@@ -3,7 +3,7 @@ import * as utils from '../utils.js'
 
 export async function newItems({ address, email, items, password, type, variables }) {
   const browser = await launch({
-    headless: false,
+    // headless: false,
     args: [
       `--host-resolver-rules=MAP sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN} ${address}`
     ]

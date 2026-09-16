@@ -31,6 +31,8 @@ export const getItem = ({ items, name }) => {
 }
 
 export const getNotes = ({ items, name, systemdEscape }) => {
+  console.log('getNotes', name)
+  import('util').then(util => { console.log(util.inspect(items, { depth: Infinity })) })
   try {
     const item = getItem({ items, name })
     if (systemdEscape === true) {
@@ -43,8 +45,11 @@ export const getNotes = ({ items, name, systemdEscape }) => {
 }
 
 export const getItems = ({ variables }) => {
+  console.log('getItems', variables)
   let items = []
+  console.log(process.env.ALIAJS_BOOTSTRAP_MODE, process.env.ALIAJS_BOOTSTRAP_MODE === undefined)
   if (process.env.ALIAJS_BOOTSTRAP_MODE === undefined) {
+    console.log(11111111)
     const env = Object.assign({}, process.env, {
       BW_CLIENTID: variables[0],
       BW_CLIENTSECRET: variables[1],
@@ -57,13 +62,18 @@ export const getItems = ({ variables }) => {
       // Ignoring this error, 'bw logout' is run only to prevent a login attempt
       // below on an already logged in Bitwarden client.
     }
+    console.log(2222222222)
 
     try {
+      child_process.execSync(`bw config server https://sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, { env, encoding: 'utf8' })
+      console.log(3333333)
       child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
       env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
       child_process.execSync('bw sync', { env, encoding: 'utf8' })
       const result = child_process.execSync('bw list items', { env, encoding: 'utf8' })
       items = JSON.parse(result)
+      console.log('🥚')
+      import('util').then(util => { console.log(util.inspect(items, { depth: Infinity })) })
       child_process.execSync('bw logout')
     } catch (error) {
       log.error({ error, channel: 'operations' })
@@ -136,6 +146,7 @@ export const setItems = ({ index, items: itemsToSet }) => {
 
     let item
     try {
+      child_process.execSync(`bw config server https://sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, { env, encoding: 'utf8' })
       child_process.execSync('bw login --apikey', { env, encoding: 'utf8' })
       env.BW_SESSION = child_process.execSync('bw unlock --raw --passwordenv BW_PASSWORD', { env, encoding: 'utf8' })
       for (let i = 0; i < itemsToSet.length; i++) {
@@ -190,7 +201,7 @@ function validate() {
   }
 }
 
-function variables() {
+export function variables() {
   const parsed = dotenv.parse(fs.readFileSync(`${__dirname}/../.env`))
   for (let key in parsed) {
     if (process.env[key] === '') {
@@ -201,14 +212,11 @@ function variables() {
   }
 }
 
-// TODO
-// if (import.meta.main) {
-//     newImage()
-// }
 try {
   if (process.env.ALIAJS_RESTORE_SAUCE === 'restore') {
     restore()
     items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
+    variables()
   } else if (process.env.ALIAJS_BOOTSTRAP_MODE === undefined) {
     items.operations = []
     items.development = []
@@ -219,12 +227,11 @@ try {
     items.development = getItems({ variables: items.operations.variables[1] })
     items.certificates = getItems({ variables: items.operations.variables[2] })
     backup({ data: JSON.stringify(items) })
+    variables()
   }
   if (process.env.ALIAJS_SHOW_SAUCE === 'show') {
     console.log(items)
   }
-  // TODO
-  // variables()
 } catch (error) {
   const message = '<!channel> items: Error exporting items'
 

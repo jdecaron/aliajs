@@ -180,7 +180,13 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   }
 
   const env = dotenv.parse(fs.readFileSync(`${temp}/.env`))
-  items.items.development = items.getItems({ variables: items.items.operations.variables[0] })
+  console.log('items 🏔️')
+  console.log((await import('util')).inspect(items, { depth: Infinity }))
+  let target = 1
+  if (service.name === 'aliajs') {
+    target = 0
+  }
+  items.items.development = items.getItems({ variables: items.items.operations.variables[target] })
   for (let name in env) {
     if (env[name] === '') {
       variables = `${variables}\nEnvironment=${name}=${items.getNotes({ items: items.items.development, name, systemdEscape: true })}`

@@ -120,6 +120,7 @@ let key
     value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
   })
   await cloud.createKey({ key })
+  setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: fs.readFileSync(keyPath).toString('utf8') })
 }
 
 await newImage()
@@ -136,7 +137,7 @@ await newImage()
 
   // Bootstrap environment variables for application instances
   process.env.ALIAJS_AUTHORIZATION = utils.getUniqueString({ length: 32 })
-  setItem({ items: items.development, name: 'ALIAJS_AUTHORIZATION', notes: process.env.ALIAJS_AUTHORIZATION })
+  setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: process.env.ALIAJS_AUTHORIZATION })
 }
 
 const { domains } = await utils.lazyImport({
@@ -217,7 +218,14 @@ const { domains } = await utils.lazyImport({
     })
     await initInstances({ instances: [instanceClone], replace: true })
 
-    process.env.ALIAJS_BOOTSTRAP_MODE = undefined
+    console.log('🏁🏁🏁🏁')
+    import('util').then(util => { console.log(util.inspect(instances, { depth: Infinity })) })
+    // Assigning a property on process.env will implicitly convert the value to a string.
+    // This behavior is deprecated. Future versions of Node.js may throw an error when the value is not a string, number, or boolean.
+    // https://nodejs.org/api/process.html#processenv
+    // process.env.ALIAJS_BOOTSTRAP_MODE = undefined
+    delete process.env.ALIAJS_BOOTSTRAP_MODE
+    // variables
     await initInstances({ domains, instances, replace: true })
   }
 }
