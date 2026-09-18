@@ -6,41 +6,44 @@ import * as cloud from './cloud/cloud.js'
 import { install, SSH } from './utils.js'
 import * as configurations from '../configurations/images.js'
 import logger from './logger.js'
-import { operations } from './utils.js'
+import { operations, waitForInstance } from './utils.js'
 
 const log = logger(fileURLToPath(import.meta.url))
 
-async function newImage() {
-  for (const image of configurations.images) {
-    await cloud.deleteImages({ description: image.Name })
+export async function newImage() {
+    for (const image of configurations.images) {
+        await cloud.deleteImages({ description: image.Name })
 
-    const { Reservations } = await cloud.newInstance({
-      imageName: image.ImageId,
-      keyName: process.env.ALIAJS_KEY_NAME,
-      name: 'aliajs-new-image',
-      type: process.env.ALIAJS_DEFAULT_INSTANCE_TYPE,
-    })
+        const { Reservations } = await cloud.newInstance({
+            imageName: image.ImageId,
+            keyName: process.env.ALIAJS_KEY_NAME,
+            name: 'aliajs-new-image',
+            type: process.env.ALIAJS_DEFAULT_INSTANCE_TYPE,
+        })
 
-    const instance = Reservations[0].Instances[0]
+        const instance = Reservations[0].Instances[0]
 
-    const ssh = {
-      new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
-      root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
+        const ssh = {
+            new: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
+            root: SSH({ address: instance.PublicIpAddress, keyName: process.env.ALIAJS_KEY_NAME, sauce: items.sauce }),
+        }
+      await waitForInstance({ ssh, user: 'root' })
+      await operations({
+            data: image.data,
+            items,
+            operations: image.operations,
+            ssh,
+            type: 'initial'
+        })
+
+        // Create new image.
+        await cloud.createImage(({ instance, image }))
+
+        // Delete instance
+        await cloud.deleteInstance({ instance })
     }
-    await operations({
-      data: image.data,
-      items,
-      operations: image.operations,
-      ssh,
-      type: 'initial'
-    })
-
-    // Create new image.
-    await cloud.createImage(({ instance, image }))
-
-    // Delete instance
-    await cloud.deleteInstance({ instance })
-  }
 }
 
-newImage()
+if (import.meta.main) {
+    newImage()
+}

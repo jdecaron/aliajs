@@ -101,8 +101,8 @@ export async function nginx({ address, checkout, domain, exec, flags, initial, h
   const custom = await eta.renderAsync('nginx/custom', {})
   fs.writeFileSync(`${temp}/sync/custom.conf`, custom)
 
-  await exec({ command: `rsync -az ${temp}/sync/ ${user}@${address}:${home}/${unique}` })
-  await exec({ command: `rsync -az ${staticBuilds} ${user}@${address}:${home}` })
+  await exec({ command: `rsync -az -e "ssh -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}" ${temp}/sync/ ${user}@${address}:${home}/${unique}` })
+  await exec({ command: `rsync -az -e "ssh -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}" ${staticBuilds} ${user}@${address}:${home}` })
   await ssh.new({ command: `sudo mv -f ${home}/${unique}/custom.conf /etc/nginx/conf.d/` })
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
@@ -180,7 +180,11 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   }
 
   const env = dotenv.parse(fs.readFileSync(`${temp}/.env`))
-  items.items.development = items.getItems({ variables: items.items.operations.variables[0] })
+  let target = 1
+  if (service.name === 'aliajs') {
+    target = 0
+  }
+  items.items.development = items.getItems({ variables: items.items.operations.variables[target] })
   for (let name in env) {
     if (env[name] === '') {
       variables = `${variables}\nEnvironment=${name}=${items.getNotes({ items: items.items.development, name, systemdEscape: true })}`
@@ -207,7 +211,7 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   const custom = await eta.renderAsync('nginx/custom', {})
   fs.writeFileSync(`${temp}/custom`, custom)
 
-  await exec({ command: `rsync -az ${temp}/ ${user}@${address}:${home}/${unique_service_name}` })
+  await exec({ command: `rsync -az -e "ssh -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}" ${temp}/ ${user}@${address}:${home}/${unique_service_name}` })
   await ssh.new({ command: `sudo cp -f ${home}/${unique_service_name}/sites-enabled/* /etc/nginx/sites-enabled/` })
   await ssh.new({ command: `sudo mv -f ${home}/${unique_service_name}/custom /etc/nginx/conf.d/custom.conf` })
   await ssh.new({ command: `sudo mv ${home}/${unique_service_name}/service /etc/systemd/system/${unique_service_name}.service` })

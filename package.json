@@ -28,17 +28,23 @@
     "doc": "docs"
   },
   "scripts": {
-    "dev": "node --watch-path=./src ./src/main.js"
+    "dev": "node --watch-path=./src ./src/main.js",
+    "new": "node ./src/new.js"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "bole": "^5.0.11",
     "dotenv": "^16.4.5",
     "eta": "^3.5.0",
-    "hono": "^4.7.7",
+    "hono": "^4.13.8",
     "ky": "^2.0.2"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
+  },
+  "devDependencies": {
+    "@clack/prompts": "^1.7.0",
+    "aws4": "^1.13.2",
+    "puppeteer": "^25.9.0"
   }
 }

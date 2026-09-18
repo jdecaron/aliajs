@@ -7,6 +7,7 @@ import { getItem, getNotes, items, sauce, setItems } from './items.js'
 import { getCloudAPItoken, getDomain, exec, SSH } from './utils.js'
 import { domains } from '../configurations/domains.js'
 import logger from './logger.js'
+import { temp } from '/Users/jean-deniscaron/dev/temp-turnkey/cert.js' // TODO
 
 const log = logger(fileURLToPath(import.meta.url))
 
@@ -37,7 +38,7 @@ export const renewCertificates = async () => {
       const temp = (await ssh.current({ command: 'mktemp -d' })).replace(/\s$/, '')
       const token = getCloudAPItoken({ cloud: host.cloud })
       const zone = domain
-      await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME}.pem -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
+      await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
       await ssh.current({ command: `chmod a+x ${temp}/*.sh` })
       await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, sauce: [ token ] })
     } else {
@@ -57,4 +58,6 @@ export const renewCertificates = async () => {
   await cloud.deleteInstance({ instance })
 }
 
-renewCertificates()
+if (import.meta.main) {
+  renewCertificates()
+}
