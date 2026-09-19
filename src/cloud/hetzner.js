@@ -1,6 +1,5 @@
 import '../env.js'
 
-import aws4 from 'aws4'
 import ky from 'ky'
 import { fileURLToPath } from 'url'
 import logger from '../logger.js'
@@ -8,6 +7,8 @@ import logger from '../logger.js'
 const log = logger(fileURLToPath(import.meta.url))
 
 export const createBucket = async ({ name, region = process.env.ALIAJS_DEFAULT_LOCATION }) => {
+  const aws4 = await import('aws4')
+
   const host = `${region}.your-objectstorage.com`
 
   const opts = {
