@@ -7,7 +7,7 @@ import logger from '../logger.js'
 const log = logger(fileURLToPath(import.meta.url))
 
 export const createBucket = async ({ name, region = process.env.ALIAJS_DEFAULT_LOCATION }) => {
-  const aws4 = await import('aws4')
+  const { default: aws4 } = await import('aws4')
 
   const host = `${region}.your-objectstorage.com`
 
@@ -19,7 +19,6 @@ export const createBucket = async ({ name, region = process.env.ALIAJS_DEFAULT_L
     region,
   }
 
-  // aws4 signs the request options in place, adding the headers
   aws4.sign(opts, {
     accessKeyId: process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID,
     secretAccessKey: process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY,
