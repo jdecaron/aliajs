@@ -274,7 +274,7 @@ function command({ data, service, type }) {
     javascript: {
       build: "echo 'nothing to build'",
       main: '/src/main',
-      packages: 'npm install',
+      packages: 'npm install --omit=dev',
       run: '/usr/bin/node',
     },
     typescript: {
