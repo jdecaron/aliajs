@@ -252,6 +252,6 @@ const { domains } = await utils.lazyImport({
     // process.env.ALIAJS_BOOTSTRAP_MODE = undefined
     delete process.env.ALIAJS_BOOTSTRAP_MODE
     // variables
-    await initInstances({ domains, instances, replace: true })
+    await initInstances({ domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances, replace: true })
   }
 }
