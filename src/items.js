@@ -179,7 +179,7 @@ try {
     restore()
     items.operations.variables = JSON.parse(getNotes({ items: items.operations, name: 'variables' }))
     variables()
-  } else if (process.env.ALIAJS_BOOTSTRAP_MODE === undefined) {
+  } else if (process.env.ALIAJS_BOOTSTRAP_MODE === 'bootstrap') {
     items.operations = []
     items.development = []
     items.certificates = []
