@@ -7,7 +7,6 @@ import { getItem, getNotes, items, sauce, setItems } from './items.js'
 import { getCloudAPItoken, getDomain, exec, SSH } from './utils.js'
 import { domains } from '../configurations/domains.js'
 import logger from './logger.js'
-import { temp } from '/Users/jean-deniscaron/dev/temp-turnkey/cert.js' // TODO
 
 const log = logger(fileURLToPath(import.meta.url))
 
