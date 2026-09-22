@@ -1,4 +1,7 @@
-process.env.ALIAJS_BOOTSTRAP_MODE = 'bootstrap'
+// process.env.ALIAJS_BOOTSTRAP_MODE = 'bootstrap'
+// import './bootstrap.js' is preferred
+// because code here is run after imports
+import './bootstrap.js'
 import './env.js'
 
 import child_process from 'child_process'
@@ -11,6 +14,8 @@ import { newImage } from './new-image.js'
 import * as utils from './utils.js'
 
 // TODO WARNING!!! Radio, proceed with caution, second step, understand the risk, running on new project
+
+const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
 let value = await select({
   message: 'Set your default cloud provider. (only hetzner for now)',
@@ -127,7 +132,6 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY', notes: value })
   }
 
-  const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 3 })
   process.env.ALIAJS_DEFAULT_S3_URL = await cloud.createBucket({ name: `${process.env.APP_NAME}-${uniqueString}-bucket` })
 
   setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', notes: process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID })
@@ -137,10 +141,9 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 
 let key
 {
-  process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-key.pem`
+  process.env.ALIAJS_KEY_NAME = `${(new Date()).toISOString().slice(0, 10)}-${process.env.APP_NAME}-${uniqueString}-key.pem`
   setItem({ items: items.operations, name: 'ALIAJS_KEY_NAME', notes: process.env.ALIAJS_KEY_NAME })
   const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
-  // child_process.execSync(`rm -f ~/.ssh/*aliajs-key.pem*`)
   child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
 
   key = utils.deepFreeze({
