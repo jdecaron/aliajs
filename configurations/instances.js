@@ -61,7 +61,7 @@ export const instances = [
         "remote_repository": "https://github.com/jdecaron/aliajs.git",
         "operations": {
           "initial": [
-            { command: "npm install -g @bitwarden/cli", target: "new" },
+            { command: "npm install -g @bitwarden/cli@2026.6", target: "new" }, // https://github.com/dani-garcia/vaultwarden/discussions/7615#discussioncomment-18140443
             { command: "sudo ln -f -s <%= home %>/opt/node-v*/bin/bw /usr/bin/bw", target: "new" },
             { command: `bw config server https://sauce-production.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, target: "new" },
             { command: "echo \"Host * \n  StrictHostKeyChecking no\n  IdentityFile ~/.ssh/<%= aliajs_key_name %>\" > ~/.ssh/config", target: "new" },
