@@ -132,7 +132,7 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY', notes: value })
   }
 
-  process.env.ALIAJS_DEFAULT_S3_URL = await cloud.createBucket({ name: `${process.env.APP_NAME}-${uniqueString}-bucket` })
+  process.env.ALIAJS_DEFAULT_S3_URL = await cloud.createBucket({ name: `${process.env.APP_NAME}-bucket-${uniqueString}` })
 
   setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', notes: process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID })
   setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY', notes: process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY })
