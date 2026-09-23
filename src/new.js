@@ -193,6 +193,19 @@ const { domains } = await utils.lazyImport({
 }
 
 {
+  // TODO parse instances for c.items.getItem then set them according to their
+  // target c.items.items... let's do this with some meta programming (ideal)
+  // hardcoded for now
+  process.env.FRAPPE_DB_ROOT_PASSWORD = utils.getUniqueString({ length: 16 })
+  process.env.FRAPPE_ADMIN_PASSWORD = utils.getUniqueString({ length: 16 })
+  setItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD', notes: process.env.FRAPPE_DB_ROOT_PASSWORD })
+  setItem({ items: items.operations, name: 'FRAPPE_ADMIN_PASSWORD', notes: process.env.FRAPPE_ADMIN_PASSWORD })
+  // TODO push to an array to show at the end of the setup process
+  console.log({ name: 'FRAPPE_DB_ROOT_PASSWORD', notes: process.env.FRAPPE_DB_ROOT_PASSWORD })
+  console.log({ name: 'FRAPPE_ADMIN_PASSWORD', notes: process.env.FRAPPE_ADMIN_PASSWORD  })
+}
+
+{
   const { instances } = await utils.lazyImport({
     specifier: '../configurations/instances.js',
     baseURL: import.meta.url,
