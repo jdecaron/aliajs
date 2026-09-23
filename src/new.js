@@ -254,6 +254,7 @@ const { domains } = await utils.lazyImport({
     // https://nodejs.org/api/process.html#processenv
     // process.env.ALIAJS_BOOTSTRAP_MODE = undefined
     delete process.env.ALIAJS_BOOTSTRAP_MODE
-    await initInstances({ domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances, replace: true })
+    const filteredInstances = instances.filter((instance) => { return instance.name !== 'sauce-production' }) // sauce-production is already up and running from the code block above
+    await initInstances({ domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances: filteredInstances, replace: true })
   }
 }
