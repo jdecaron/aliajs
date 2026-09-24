@@ -15,6 +15,11 @@ import * as utils from './utils.js'
 
 // TODO WARNING!!! Radio, proceed with caution, second step, understand the risk, running on new project
 
+const deployed = []
+const notes = [
+  `\n\n$AliaJS new setup complete! ✅`,
+  ('\n\nSave these informations in your personal secure information vault 🔐'),
+]
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
 let value = await select({
@@ -43,6 +48,9 @@ if (isCancel(value)) {
 
 process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] = value
 setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`, notes: value })
+
+notes.push(`\nCloud ☁️`)
+notes.push(`\n${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN: ${value}`)
 
 // Leaving low hanging fruits for the community 🫐
 {
@@ -116,6 +124,8 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 
     process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID = value
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_ACCESS_KEY_ID', notes: value })
+
+    notes.push(`\nALIAJS_DEFAULT_S3_ACCESS_KEY_ID: ${value}`)
   }
 
   {
@@ -130,6 +140,8 @@ setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_AP
 
     process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY = value
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY', notes: value })
+
+    notes.push(`\nALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY: ${value}`)
   }
 
   process.env.ALIAJS_DEFAULT_S3_URL = await cloud.createBucket({ name: `${process.env.APP_NAME}-bucket-${uniqueString}` })
@@ -151,7 +163,11 @@ let key
     value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
   })
   await cloud.createKey({ key })
-  setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: fs.readFileSync(keyPath).toString('utf8') })
+  value = fs.readFileSync(keyPath).toString('utf8')
+  setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: value })
+
+  notes.push(`\n\nssh-keygen ${process.env.ALIAJS_KEY_NAME} 🔑\n`)
+  notes.push(value)
 }
 
 await newImage()
@@ -169,6 +185,9 @@ await newImage()
   // Bootstrap environment variables for application instances
   process.env.ALIAJS_AUTHORIZATION = utils.getUniqueString({ length: 32 })
   setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: process.env.ALIAJS_AUTHORIZATION })
+
+  notes.push(`\nALIAJS_AUTHORIZATION must be defined in your shell environment, see README.md.`)
+  notes.push(`\nALIAJS_AUTHORIZATION: ${process.env.ALIAJS_AUTHORIZATION}`)
 }
 
 const { domains } = await utils.lazyImport({
@@ -208,6 +227,7 @@ const { domains } = await utils.lazyImport({
         specifier: './puppeteer/items.js',
         baseURL: import.meta.url,
       })
+
       const operationsPassword = utils.getUniqueString({ length: 16 })
       const developmentPassword = utils.getUniqueString({ length: 16 })
       const certificatesPassword = utils.getUniqueString({ length: 16 })
@@ -220,10 +240,10 @@ const { domains } = await utils.lazyImport({
 
       await c.ssh.new({ command: 'sudo nginx -t' })
       await c.ssh.new({ command: 'sudo service nginx reload' })
-      console.log('Save these accounts informations in your personal secure information vault 🔐')
+      notes.push('\n\nVaultwarden Accounts 🔐')
       for (let account of accounts) {
         try {
-          console.log(`\nAccount: ${account.email}\nPassword: ${account.password}`)
+          notes.push(`\n\nAccount: ${account.email}\nPassword: ${account.password}`)
           await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, type: account.type, variables })
         } catch (error) {
           console.error(error)
@@ -234,6 +254,8 @@ const { domains } = await utils.lazyImport({
       process.env.ALIAJS_VARIABLE_0 = variables[0][0]
       process.env.ALIAJS_VARIABLE_1 = variables[0][1]
       process.env.ALIAJS_VARIABLE_2 = variables[0][2]
+
+      notes.push(`\n\nRESTIC_PASSWORD: ${process.env.ALIAJS_VARIABLE_2}`)
 
       await c.ssh.new({ command: `sudo docker exec vaultwarden /vaultwarden backup` })
       const backupFile = (await c.ssh.new({ command: `ls -t /vw-data/ | head -n1` })).replace(/\s$/, '')
@@ -247,7 +269,7 @@ const { domains } = await utils.lazyImport({
       specifier: './new-instance.js',
       baseURL: import.meta.url,
     })
-    await initInstances({ instances: [instanceClone], replace: true })
+    await initInstances({ deployed, instances: [instanceClone], replace: true })
 
     // Assigning a property on process.env will implicitly convert the value to a string.
     // This behavior is deprecated. Future versions of Node.js may throw an error when the value is not a string, number, or boolean.
@@ -255,6 +277,17 @@ const { domains } = await utils.lazyImport({
     // process.env.ALIAJS_BOOTSTRAP_MODE = undefined
     delete process.env.ALIAJS_BOOTSTRAP_MODE
     const filteredInstances = instances.filter((instance) => { return instance.name !== 'sauce-production' }) // sauce-production is already up and running from the code block above
-    await initInstances({ domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances: filteredInstances, replace: true })
+    await initInstances({ deployed, domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances: filteredInstances, replace: true })
+  }
+}
+
+{
+  for (const note of notes) {
+    process.stdout.write(note)
+  }
+
+  console.log('\n\nDeployed services:')
+  for (const service of deployed) {
+    console.log(service)
   }
 }
