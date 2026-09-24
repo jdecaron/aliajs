@@ -219,9 +219,6 @@ const { domains } = await utils.lazyImport({
   process.env.FRAPPE_ADMIN_PASSWORD = utils.getUniqueString({ length: 16 })
   setItem({ items: items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD', notes: process.env.FRAPPE_DB_ROOT_PASSWORD })
   setItem({ items: items.operations, name: 'FRAPPE_ADMIN_PASSWORD', notes: process.env.FRAPPE_ADMIN_PASSWORD })
-  // TODO push to an array to show at the end of the setup process
-  console.log({ name: 'FRAPPE_DB_ROOT_PASSWORD', notes: process.env.FRAPPE_DB_ROOT_PASSWORD })
-  console.log({ name: 'FRAPPE_ADMIN_PASSWORD', notes: process.env.FRAPPE_ADMIN_PASSWORD  })
 }
 
 {
@@ -292,6 +289,13 @@ const { domains } = await utils.lazyImport({
     const filteredInstances = instances.filter((instance) => { return instance.name !== 'sauce-production' }) // sauce-production is already up and running from the code block above
     await initInstances({ deployed, domains, flags: { exclude: [ 'backup', 'restore' ], target: [] }, instances: filteredInstances, replace: true })
   }
+}
+
+{
+  notes.push(`\n\nERPNext ⛏️`)
+  notes.push(`\nAccount: Administrator`)
+  notes.push(`\nFRAPPE_DB_ROOT_PASSWORD: ${process.env.FRAPPE_DB_ROOT_PASSWORD}`)
+  notes.push(`\nFRAPPE_ADMIN_PASSWORD: ${process.env.process.env.FRAPPE_ADMIN_PASSWORD}`)
 }
 
 {
