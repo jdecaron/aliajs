@@ -295,7 +295,7 @@ const { domains } = await utils.lazyImport({
   notes.push(`\n\nERPNext ⛏️`)
   notes.push(`\nAccount: Administrator`)
   notes.push(`\nFRAPPE_DB_ROOT_PASSWORD: ${process.env.FRAPPE_DB_ROOT_PASSWORD}`)
-  notes.push(`\nFRAPPE_ADMIN_PASSWORD: ${process.env.process.env.FRAPPE_ADMIN_PASSWORD}`)
+  notes.push(`\nFRAPPE_ADMIN_PASSWORD: ${process.env.FRAPPE_ADMIN_PASSWORD}`)
 }
 
 {
