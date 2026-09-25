@@ -30,7 +30,7 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-export const initInstance = async ({ address, ephemeral, flags, instance, refresh, replace, response, temp }) => {
+export const initInstance = async ({ address, deployed = [], ephemeral, flags, instance, refresh, replace, response, temp }) => {
   const { services, type } = instance
 
   const imageName = instance.imageName || process.env.ALIAJS_DEFAULT_IMAGE_NAME
@@ -94,7 +94,9 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
       await cloud.upsertARecord({ instance, name: instance.name, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
       for (const service of services) {
         await cloud.upsertARecord({ instance, name: `${service.name}-${service.tier}`, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
-        console.log(`Deployed: https://${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`)
+        const URL = `https://${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`
+        deployed.push(URL)
+        console.log(`Deployed: ${URL}`)
       }
       if (ephemeral) {
         // New name, no need to wait for the record TTL to expire
@@ -107,7 +109,7 @@ export const initInstance = async ({ address, ephemeral, flags, instance, refres
   return Reservations
 }
 
-export const initInstances = async ({ address, ephemeral, flags, instances, replace, response }) => {
+export const initInstances = async ({ address, deployed, ephemeral, flags, instances, replace, response }) => {
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
@@ -119,7 +121,7 @@ export const initInstances = async ({ address, ephemeral, flags, instances, repl
       instance = cloneInstance({ ephemeral, instance })
     }
 
-    const Reservations = await initInstance({ address, ephemeral, flags, instance, replace, response, temp })
+    const Reservations = await initInstance({ address, deployed, ephemeral, flags, instance, replace, response, temp })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
