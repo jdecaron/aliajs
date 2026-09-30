@@ -46,5 +46,8 @@
     "@clack/prompts": "^1.7.0",
     "aws4": "^1.13.2",
     "puppeteer": "^25.9.0"
+  },
+  "allowScripts": {
+    "puppeteer": true
   }
 }
