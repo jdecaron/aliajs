@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n:stable
+    network_mode: host
+    container_name: n8n
+    restart: unless-stopped
+    environment:
+      - N8N_HOST=<%= server_name %>
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_FUNCTION_ALLOW_EXTERNAL=*
+      - NODE_OPTIONS=--no-deprecation
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://<%= server_name %>/
+    volumes:
+      - n8n_data:/home/node/.n8n
+<% if (restore === true) { -%>
+      - ../../config:/home/node/.n8n/config
+      - ../../database.sqlite:/home/node/.n8n/database.sqlite
+<% } -%>
+
+volumes:
+  n8n_data:
