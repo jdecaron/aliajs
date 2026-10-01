@@ -10,7 +10,7 @@ export async function newItems({ address, email, items, password, type, variable
   })
   const targetPage = await browser.newPage()
 
-  const timeout = 20000
+  const timeout = 30000
   targetPage.setDefaultTimeout(timeout)
 
   // Email, account name page
@@ -146,6 +146,10 @@ export async function newItems({ address, email, items, password, type, variable
   {
     if (type === 'operations') {
       items.push({ name: 'variables', notes: JSON.stringify(variables) })
+      {
+        environmentVariables.value = ` export ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN=${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}; export ALIAJS_VARIABLE_0=${variables[0][0]}; export ALIAJS_VARIABLE_1=${variables[0][1]}; export ALIAJS_VARIABLE_0=${variables[2][2]};`
+        setItem({ items: items.operations, name: 'export (development environment)', notes: environmentVariables.value })
+      }
     }
     const JSONitems = utils.importItems({ items })
     await Locator.race([
