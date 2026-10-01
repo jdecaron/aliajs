@@ -80,12 +80,12 @@ export const instances = [
             { command: "cd <%= home %>/n8n && sudo docker-compose up -d", target: "new" },
           ],
           "backup": [
-            { command: "sudo docker cp n8n:/home/node/.n8n/database.sqlite <%= home %>/database.sqlite", target: "current" },
-            { command: "sudo docker cp n8n:/home/node/.n8n/config <%= home %>/config", target: "current" },
-            { command: "sudo chown $USER:$USER <%= home %>/config <%= home %>/database.sqlite", target: "current" },
+            { command: "sudo docker cp n8n:/home/node/.n8n/database.sqlite <%= home %>/n8n/database.sqlite", target: "current" },
+            { command: "sudo docker cp n8n:/home/node/.n8n/config <%= home %>/n8n/config", target: "current" },
+            { command: "sudo chown $USER:$USER <%= home %>/n8n/config <%= home %>/n8n/database.sqlite", target: "current" },
             { command: async ({ c }) => {
-              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename n8n-production-config-backup --tag n8n-production-config-backup < ${c.data.home}/config`, sauce: c.sauce })
-              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename n8n-production-database-backup --tag n8n-production-database-backup < ${c.data.home}/database.sqlite`, sauce: c.sauce })
+              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename n8n-production-config-backup --tag n8n-production-config-backup < ${c.data.home}/n8n/config`, sauce: c.sauce })
+              await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename n8n-production-database-backup --tag n8n-production-database-backup < ${c.data.home}/n8n/database.sqlite`, sauce: c.sauce })
             }},
           ],
           "restore": [
@@ -93,8 +93,8 @@ export const instances = [
               await c.ssh.new({ command: `cd ${c.data.home}/n8n && sudo docker-compose down -v` })
               const dockerComposeYML = await c.eta.renderAsync('n8n/docker-compose.yml', { restore: true, ...c.data })
               await c.ssh.new({ command: `echo '${dockerComposeYML}' > ${c.data.home}/n8n/docker-compose.yml` })
-              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest n8n-production-config-backup --tag n8n-production-config-backup > ${c.data.home}/config`, sauce: c.sauce })
-              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest n8n-production-database-backup --tag n8n-production-database-backup > ${c.data.home}/database.sqlite`, sauce: c.sauce })
+              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest n8n-production-config-backup --tag n8n-production-config-backup > ${c.data.home}/n8n/config`, sauce: c.sauce })
+              await c.ssh.new({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic dump latest n8n-production-database-backup --tag n8n-production-database-backup > ${c.data.home}/n8n/database.sqlite`, sauce: c.sauce })
               await c.ssh.new({ command: `cd ${c.data.home}/n8n && sudo docker-compose up -d` })
             }},
           ],

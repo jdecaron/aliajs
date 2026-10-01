@@ -17,8 +17,8 @@ services:
     volumes:
       - n8n_data:/home/node/.n8n
 <% if (restore === true) { -%>
-      - ../../config:/home/node/.n8n/config
-      - ../../database.sqlite:/home/node/.n8n/database.sqlite
+      - ./config:/home/node/.n8n/config
+      - ./database.sqlite:/home/node/.n8n/database.sqlite
 <% } -%>
 
 volumes:
