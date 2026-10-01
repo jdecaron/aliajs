@@ -241,6 +241,14 @@ try {
 
         await c.ssh.new({ command: 'sudo nginx -t' })
         await c.ssh.new({ command: 'sudo service nginx reload' })
+
+        {
+          const variables = ` export ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN=${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}; export ALIAJS_VARIABLE_0=${accounts[2][0]}; export ALIAJS_VARIABLE_1=${accounts[2][1]}; export ALIAJS_VARIABLE_0=${accounts[2][2]};`
+          setItem({ items: items.operations, name: 'export (development environment)', notes: variables })
+          notes.push('\n\nLocal environment variables to run AliaJS (development environment)')
+          notes.push(variables)
+        }
+
         notes.push('\n\nVaultwarden Accounts 🔐')
         for (let account of accounts) {
           try {
