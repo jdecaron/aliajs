@@ -229,6 +229,7 @@ try {
           baseURL: import.meta.url,
         })
 
+        let environmentVariables = { value: '' }
         const operationsPassword = utils.getUniqueString({ length: 16 })
         const developmentPassword = utils.getUniqueString({ length: 16 })
         const certificatesPassword = utils.getUniqueString({ length: 16 })
@@ -242,18 +243,11 @@ try {
         await c.ssh.new({ command: 'sudo nginx -t' })
         await c.ssh.new({ command: 'sudo service nginx reload' })
 
-        {
-          const variables = ` export ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN=${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}; export ALIAJS_VARIABLE_0=${accounts[2][0]}; export ALIAJS_VARIABLE_1=${accounts[2][1]}; export ALIAJS_VARIABLE_0=${accounts[2][2]};`
-          setItem({ items: items.operations, name: 'export (development environment)', notes: variables })
-          notes.push('\n\nLocal environment variables to run AliaJS (development environment)')
-          notes.push(variables)
-        }
-
         notes.push('\n\nVaultwarden Accounts 🔐')
         for (let account of accounts) {
           try {
             notes.push(`\n\nAccount: ${account.email}\nPassword: ${account.password}`)
-            await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, type: account.type, variables })
+            await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, environmentVariables, items: account.items, password: account.password, type: account.type, variables })
           } catch (error) {
             console.error(error)
           }
@@ -263,6 +257,9 @@ try {
         process.env.ALIAJS_VARIABLE_0 = variables[0][0]
         process.env.ALIAJS_VARIABLE_1 = variables[0][1]
         process.env.ALIAJS_VARIABLE_2 = variables[0][2]
+
+        notes.push('\n\nLocal environment variables to run AliaJS (development environment)')
+        notes.push(environmentVariables.value)
 
         notes.push(`\n\nRESTIC_PASSWORD: ${process.env.ALIAJS_VARIABLE_2}`)
 
