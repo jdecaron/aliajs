@@ -50,12 +50,12 @@ npm run dev
 
 **Updating running services:**
 ```bash
-curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/deploy?checkout=${CHECKOUT}&service_name=aliajs&tier=production"
+CHECKOUT=main curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/deploy?checkout=${CHECKOUT}&service_name=aliajs&tier=production"
 ```
 
 **Starting new instances:**
 ```bash
-curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/new-instance?address=1.1.1.1&checkout=${CHECKOUT}&instance_name=aliajs-production&replace=false"
+CHECKOUT=main curl -v -N --header "Authorization: ${ALIAJS_AUTHORIZATION}" "https://aliajs-production.rotat.io/new-instance?address=1.1.1.1&checkout=${CHECKOUT}&instance_name=aliajs-production&replace=false"
 ```
 `address`, default `undefined`: possible values: `allocate`, `ip`: examples `address=allocate` `address=1.1.1.1`: address=allocate will request a permanent IP from the cloud provider and associate it to the new instance.\
 `ephemeral`, default `false`: create a new ephemeral instance with a new unique DNS.\
