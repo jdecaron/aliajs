@@ -1,6 +1,8 @@
+import dns from 'dns'
 import { fileURLToPath } from 'url'
 import { Hono } from 'hono'
 import { streamText } from 'hono/streaming'
+import util from 'util'
 import * as deploy from './deploy.js'
 import { initInstances } from './new-instance.js'
 import * as utils from './utils.js'
@@ -9,6 +11,8 @@ import { domains } from '../configurations/domains.js'
 import { instances } from '../configurations/instances.js'
 
 const log = logger(fileURLToPath(import.meta.url))
+
+const lookup = util.promisify(dns.lookup)
 
 const router = new Hono()
 
@@ -22,9 +26,19 @@ router.get('/deploy', (c) => {
     try {
       const { instance, service } = utils.service({ instances, service_name, tier })
       const exec = utils.EXEC({ response: stream })
+
+      let address = instance.address
+      if (address === undefined) {
+        try {
+          address = (await lookup(`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`)).address
+        } catch (error) {
+          log.warn(`WARNING! Could not lookup DNS ${`${instance.name}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`} (it can be OK)`)
+        }
+      }
+
       const ssh = {
-        current: utils.SSH({ address: instance.address, keyName: process.env.ALIAJS_KEY_NAME, response: stream }),
-        new: utils.SSH({ address: instance.address, keyName: process.env.ALIAJS_KEY_NAME, response: stream }),
+        current: utils.SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response: stream }),
+        new: utils.SSH({ address, keyName: process.env.ALIAJS_KEY_NAME, response: stream }),
       }
       await deploy[service.type]({ checkout, exec, service, ssh })
     } catch (error) {
