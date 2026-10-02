@@ -82,7 +82,7 @@ export const instances = [
           "backup": [
             { command: async ({ c }) => {
               await c.ssh.current({ command: `sudo docker exec n8n node -e "import { DatabaseSync, backup } from 'node:sqlite'; const db=new DatabaseSync('/home/node/.n8n/database.sqlite', { readOnly:true }); await backup(db, 'database-backup.sqlite');"`, sauce: c.sauce }) // sqlite3 is not installed on the n8n default docker image, native sqlite module introduced in NodeJS v22.5.0 is a good solution to run the database backup operation
-              await c.ssh.current({ command: `sudo docker cp n8n:/home/node/.n8n/database-backup.sqlite ${c.data.home}/n8n/database-backup.sqlite`, sauce: c.sauce })
+              await c.ssh.current({ command: `sudo docker cp n8n:/home/node/database-backup.sqlite ${c.data.home}/n8n/database-backup.sqlite`, sauce: c.sauce })
               await c.ssh.current({ command: `sudo docker cp n8n:/home/node/.n8n/config ${c.data.home}/n8n/config`, sauce: c.sauce })
               await c.ssh.current({ command: `sudo chown $USER:$USER ${c.data.home}/n8n/config ${c.data.home}/n8n/database-backup.sqlite`, sauce: c.sauce })
               await c.ssh.current({ command: `export AWS_ACCESS_KEY_ID=${process.env.ALIAJS_DEFAULT_S3_ACCESS_KEY_ID}; export AWS_SECRET_ACCESS_KEY=${process.env.ALIAJS_DEFAULT_S3_SECRET_ACCESS_KEY}; export RESTIC_PASSWORD=${process.env.ALIAJS_VARIABLE_2}; restic -r ${process.env.ALIAJS_DEFAULT_S3_URL}/restic backup --stdin --stdin-filename n8n-production-config-backup --tag n8n-production-config-backup < ${c.data.home}/n8n/config`, sauce: c.sauce })
