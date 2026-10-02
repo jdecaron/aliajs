@@ -50,7 +50,7 @@ try {
   process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] = value
   setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`, notes: value })
 
-  notes.push(`\nCloud ☁️`)
+  notes.push(`\n\nCloud ☁️`)
   notes.push(`\n${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN: ${value}`)
 
   // Leaving low hanging fruits for the community 🫐
@@ -186,9 +186,6 @@ try {
     // Bootstrap environment variables for application instances
     process.env.ALIAJS_AUTHORIZATION = utils.getUniqueString({ length: 32 })
     setItem({ items: items.operations, name: 'ALIAJS_AUTHORIZATION', notes: process.env.ALIAJS_AUTHORIZATION })
-
-    notes.push(`\nALIAJS_AUTHORIZATION must be defined in your shell environment, see README.md.`)
-    notes.push(`\nALIAJS_AUTHORIZATION: ${process.env.ALIAJS_AUTHORIZATION}`)
   }
 
   const { domains } = await utils.lazyImport({
@@ -229,7 +226,7 @@ try {
           baseURL: import.meta.url,
         })
 
-        let environmentVariables = { value: '' }
+        let shell = { variables: '' }
         const operationsPassword = utils.getUniqueString({ length: 16 })
         const developmentPassword = utils.getUniqueString({ length: 16 })
         const certificatesPassword = utils.getUniqueString({ length: 16 })
@@ -247,7 +244,7 @@ try {
         for (let account of accounts) {
           try {
             notes.push(`\n\nAccount: ${account.email}\nPassword: ${account.password}`)
-            await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, environmentVariables, items: account.items, password: account.password, type: account.type, variables })
+            await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, shell, type: account.type, variables })
           } catch (error) {
             console.error(error)
           }
@@ -258,8 +255,11 @@ try {
         process.env.ALIAJS_VARIABLE_1 = variables[0][1]
         process.env.ALIAJS_VARIABLE_2 = variables[0][2]
 
-        notes.push('\n\nLocal environment variables to run AliaJS (development environment)')
-        notes.push(environmentVariables.value)
+        notes.push('\n\nLocal environment variables to run AliaJS (development environment):')
+        notes.push(shell.variables)
+
+        notes.push(`\n\nALIAJS_AUTHORIZATION must be defined in your shell environment, see README.md.`)
+        notes.push(`\nALIAJS_AUTHORIZATION: ${process.env.ALIAJS_AUTHORIZATION}`)
 
         notes.push(`\n\nRESTIC_PASSWORD: ${process.env.ALIAJS_VARIABLE_2}`)
 
