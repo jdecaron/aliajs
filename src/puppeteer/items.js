@@ -1,7 +1,7 @@
 import { Locator, launch } from 'puppeteer'
 import * as utils from '../utils.js'
 
-export async function newItems({ address, email, items, password, type, variables }) {
+export async function newItems({ address, email, items, password, shell, type, variables }) {
   const browser = await launch({
     // headless: false,
     args: [
@@ -146,6 +146,10 @@ export async function newItems({ address, email, items, password, type, variable
   {
     if (type === 'operations') {
       items.push({ name: 'variables', notes: JSON.stringify(variables) })
+      {
+        shell.variables = `\n export ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN=${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}; export ALIAJS_VARIABLE_0=${variables[0][0]}; export ALIAJS_VARIABLE_1=${variables[0][1]}; export ALIAJS_VARIABLE_0=${variables[2][2]};`
+        items.push({ name: 'export (development environment)', notes: shell.variables })
+      }
     }
     const JSONitems = utils.importItems({ items })
     await Locator.race([
