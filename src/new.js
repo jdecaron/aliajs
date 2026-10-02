@@ -259,7 +259,7 @@ try {
         notes.push(shell.variables)
 
         notes.push(`\n\nALIAJS_AUTHORIZATION must be defined in your shell environment, see README.md.`)
-        notes.push(`\nALIAJS_AUTHORIZATION: ${process.env.ALIAJS_AUTHORIZATION}`)
+        notes.push(`\n export ALIAJS_AUTHORIZATION=${process.env.ALIAJS_AUTHORIZATION}`)
 
         notes.push(`\n\nRESTIC_PASSWORD: ${process.env.ALIAJS_VARIABLE_2}`)
 
