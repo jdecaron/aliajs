@@ -23,7 +23,38 @@ const notes = [
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
 try {
-  let value = await select({
+  let value
+  {
+    value = await text({
+      message: `What is your domain name? Example: example.com`,
+    })
+
+    if (isCancel(value)) {
+      cancel('Operation cancelled')
+      process.exit(0)
+    }
+
+    const nameServers = (await utils.exec({ command: `dig ${value} NS +short` })).split('\n')
+    const matchNameServer = nameServers.filter((nameServer) => {
+      const match = []
+      for (const c of cloud.list) {
+        if (nameServer.indexOf(c.nameServer) >= 0) {
+          match.push(nameServer)
+        }
+      }
+      return match.length > 0
+    })
+    if (matchNameServer.length > 0) {
+      process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN = value
+      setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: value })
+    } else {
+      cancel(`Domain name '${value}' is set to ${nameServers?.[0]} (name server), not supported by AliaJS`)
+      console.log('For more details read the prerequisites: https://aliajs.com/self-host/#prerequisites')
+      process.exit(0)
+    }
+  }
+
+  value = await select({
     message: 'Set your default cloud provider. (only hetzner for now)',
     options: [
       { value: 'HETZNER', label: 'Hetzner' },
@@ -91,20 +122,6 @@ try {
 
     process.env.ALIAJS_DEFAULT_INSTANCE_TYPE = value
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_INSTANCE_TYPE', notes: value })
-  }
-
-  {
-    value = await text({
-      message: `What is your domain name? Example: example.com`,
-    })
-
-    if (isCancel(value)) {
-      cancel('Operation cancelled')
-      process.exit(0)
-    }
-
-    process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN = value
-    setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: value })
   }
 
   {
