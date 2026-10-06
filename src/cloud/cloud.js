@@ -10,6 +10,10 @@ function cloud() {
   return hetzner
 }
 
+export const list = [
+  { name: 'Hetzner', nameServer: 'hetzner.com' }
+]
+
 export const associateAddress = async ({ instance, ssh }) => {
   return await cloud().associateAddress({ instance, ssh })
 }
