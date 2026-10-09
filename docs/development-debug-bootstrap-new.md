@@ -16,8 +16,10 @@ ssh-keygen
   })
   // await cloud.createKey({ key })
   setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: fs.readFileSync(keyPath).toString('utf8') })
-}
 
+  notes.push(`\n\nssh-keygen ${process.env.ALIAJS_KEY_NAME} 🔑\n`)
+  notes.push(value)
+}
 ```
 
 newImage() & upsertDNSZone()
