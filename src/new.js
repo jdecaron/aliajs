@@ -34,7 +34,7 @@ try {
       process.exit(0)
     }
 
-    const nameServers = (await utils.exec({ command: `dig ${value} NS +short` })).split('\n')
+    const nameServers = [...(await utils.exec({ command: `whois ${value}` })).matchAll(/^Name Server:\s*(\S+)/gim)].map((server ) => { return server[1] })
     const matchNameServer = nameServers.filter((nameServer) => {
       const match = []
       for (const c of cloud.list) {
