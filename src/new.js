@@ -18,7 +18,7 @@ import * as utils from './utils.js'
 const deployed = []
 const notes = [
   `\n\nAliaJS new setup complete! ✅`,
-  ('\n\nSave these informations in your personal secure information vault 🔐'),
+  '\n\nSave these informations in your personal secure information vault 🔐',
 ]
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
