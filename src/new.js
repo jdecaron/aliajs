@@ -18,7 +18,7 @@ import * as utils from './utils.js'
 const deployed = []
 const notes = [
   `\n\nAliaJS new setup complete! ✅`,
-  ('\n\nSave these informations in your personal secure information vault 🔐'),
+  '\n\nSave these informations in your personal secure information vault 🔐',
 ]
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
@@ -34,7 +34,7 @@ try {
       process.exit(0)
     }
 
-    const nameServers = (await utils.exec({ command: `dig ${value} NS +short` })).split('\n')
+    const nameServers = [...(await utils.exec({ command: `whois ${value}` })).matchAll(/^Name Server:\s*(\S+)/gim)].map((server ) => { return server[1] })
     const matchNameServer = nameServers.filter((nameServer) => {
       const match = []
       for (const c of cloud.list) {
@@ -284,11 +284,9 @@ try {
         process.env.ALIAJS_VARIABLE_1 = variables[0][1]
         process.env.ALIAJS_VARIABLE_2 = variables[0][2]
 
-        notes.push('\n\nLocal environment variables to run AliaJS (development environment):')
-        notes.push(shell.variables)
-
         notes.push(`\n\nALIAJS_AUTHORIZATION must be defined in your shell environment, see README.md.`)
-        notes.push(`\n export ALIAJS_AUTHORIZATION=${process.env.ALIAJS_AUTHORIZATION}`)
+        notes.push('\n\nLocal environment variables (development environment):')
+        notes.push(shell.variables)
 
         notes.push(`\n\nRESTIC_PASSWORD: ${process.env.ALIAJS_VARIABLE_2}`)
 

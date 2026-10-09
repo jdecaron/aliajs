@@ -209,7 +209,7 @@ const createServer = async ({ name, server_type, image, location, keyName }) => 
       ssh_keys: [keyName],
       public_net: {
         enable_ipv4: true,
-        enable_ipv6: true,
+        enable_ipv6: false,
       },
     })
   }).json()
