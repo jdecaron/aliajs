@@ -32,36 +32,22 @@ newImage() & upsertDNSZone()
 ```
 
 ## renewCertificates()
-Temporarily add these changes to src/new.js:
-```js
-  await renewCertificates()
-  console.log((await import('util')).inspect(items, { depth: Infinity }))
-```
-Run src/new.js to get the console.log results ...
-Copy and save the results in a file, example cert.js
-Temporarily add these changes to src/renew-certificates.js:
-```js
-// 
-import { temp } from '.../cert.js' // TODO
-
-export const renewCertificates = async () => {
-  { // TODO delete block {}
-    for (let i = 0; i < domains.length; i++) {
-      const host = domains[i]
-      const domain = getDomain({ domain: host.host })
-
-      const editedItems = []
-      const files = [ 'privkey.pem', 'fullchain.pem' ]
-      for (let j = 0; j < files.length; j++) {
-        const fileName = files[j]
-        const item = getItem({ items: items.certificates, name: `${domain}/${fileName}` })
-        // item.notes = await ssh.current({ command: `sudo cat /etc/letsencrypt/live/${host.host}/${fileName}`, sauce: [] })
-        item.notes = temp[`${host.host}/${fileName}`]
-        editedItems.push(item)
-      }
-      setItems({ index: 2, items: editedItems })
+Save your certificates locally from your vault under ...example/example... comment out renewCertificates(), replace empty setItem with local files:
+```js src/new.js
+{
+  for (const domain of domains) {
+    const files = [ 'privkey.pem', 'fullchain.pem' ]
+    for (let j = 0; j < files.length; j++) {
+      const fileName = files[j]
+      // setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: '' }) // TODO
+      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`.../${domain.host}/${fileName}`).toString('utf8') }) // TODO
     }
-    return
-  } // TODO
+  }
+
+  // const { renewCertificates } = await utils.lazyImport({
+  //   specifier: './renew-certificates.js',
+  //   baseURL: import.meta.url,
+  // })
+  // await renewCertificates()
 }
 ```
