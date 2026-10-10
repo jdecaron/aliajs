@@ -35,13 +35,107 @@ If you or your team care about JavaScript, then maybe AliaJS is a solution for y
 [./templates](./templates): Where the EJS templates files are.
 [./configurations](./configurations): Where the instance & image configuration definitions are.
 
-## Getting started
+## Self-host
+AliaJS lets you self-host a cloud system in two command lines; 5 minutes of your attention time.
+
+### Security
+Running commands from the Internet into your computer is not the best security practice. If you don't fully trust the source of what you are running you should take easy precautions. Recommended read: [Reflections on Trusting Trust](https://fermatslibrary.com/s/reflections-on-trusting-trust) by [Ken Thompson](https://en.wikipedia.org/wiki/Ken_Thompson).
+
+- Running commands inside a virtual machine, sandbox or security wrapper, example: [Socket CLI](https://socket.dev/features/cli)
+- Blank cloud account, or sandboxed project
+- Virtual credit card, limited in credit (amount you are comfortable to risk)
+- Throwaway domain name with limited scope DNS API record access
+
+### Prerequisites
+- Cloud account (only Hetzner for now)
+- Transfer the name servers of your domain to Hetzner [authoritative name servers](https://docs.hetzner.com/networking/dns/overview#authoritative-name-servers):
+  - `hydrogen.ns.hetzner.com.`
+  - `oxygen.ns.hetzner.com.`
+  - `helium.ns.hetzner.de.`
+- Node.js version >= `22.18.0` installed locally
+
+```bash
+# More install options
+# https://nodejs.org/en/download
+
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.8/install.sh | bash
+\. "$HOME/.nvm/nvm.sh"
+nvm install 24
+```
+
+### Quick start
+1. Login to your cloud console.
+2. Create a new project (+ New project): https://console.hetzner.com/projects
+3. You will be asked two sets of secrets (API token, S3 credential), run the first command below and wait for the first question:
+   - What is your Hetzner API key (token)? `Security > API tokens`, then click `Generate API token`, set as (Read & Write)
+   - What is your S3 access key? `Security > S3 credentials`, then click `Generate credentials`
+
+#### Bootstrap a new cloud system
+Pick one of the following:
+
+<details open>
+<summary><b>Blank</b></summary>
+
+```bash
+# Specific version context
+# https://github.com/dani-garcia/vaultwarden/discussions/7615#discussioncomment-18140443
+npm install -g @bitwarden/cli@2026.6
+
+npx aliajs new
+```
+</details>
+
+<details>
+<summary><b>ERPNext</b></summary>
+
+```bash
+# Specific version context
+# https://github.com/dani-garcia/vaultwarden/discussions/7615#discussioncomment-18140443
+npm install -g @bitwarden/cli@2026.6
+
+# AliaJS works best in an empty directory
+mkdir aliajs
+cd aliajs && git clone git@github.com:jdecaron/aliajs.git && cd aliajs
+git checkout erpnext-15
+npm install && npm run new
+# Answer the questions ...
+```
+</details>
+
+<details>
+<summary><b>n8n</b></summary>
+
+```bash
+# Specific version context
+# https://github.com/dani-garcia/vaultwarden/discussions/7615#discussioncomment-18140443
+npm install -g @bitwarden/cli@2026.6
+
+# AliaJS works best in an empty directory
+mkdir aliajs
+cd aliajs && git clone git@github.com:jdecaron/aliajs.git && cd aliajs
+git checkout n8n
+npm install && npm run new
+# Answer the questions ...
+```
+</details>
+
+#### Quick start video (4 minutes)
+[![AliaJS quick start video](https://img.youtube.com/vi/wL6RcwOSwdE/hqdefault.jpg)](https://youtube.com/watch?v=wL6RcwOSwdE)
+
+### Manual setup (from source)
+`npm run new` is the whole setup path, run it before `npm run dev`.
+
+```bash
+npm install
+npm run new
+# Answer the questions ...
+```
+
 Changing the values in [.env](.env)
 
 Setup your environment variables according to the Bitwarden vault.
 
 ```bash
-npm install
 npm run dev
 ```
 
