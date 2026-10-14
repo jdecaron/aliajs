@@ -22,7 +22,7 @@ ssh-keygen
 }
 ```
 
-newImage() & upsertDNSZone()
+## newImage() & upsertDNSZone()
 ```js
 // await newImage()
 
@@ -32,7 +32,7 @@ newImage() & upsertDNSZone()
 ```
 
 ## renewCertificates()
-Save your certificates locally from your vault under ...example/example... comment out renewCertificates(), replace empty setItem with local files:
+Save your certificates locally from your vault under a local folder (example `~/dev/certificates/example.com`), comment out renewCertificates(), replace empty setItem with local files:
 ```js src/new.js
 {
   for (const domain of domains) {
@@ -40,7 +40,7 @@ Save your certificates locally from your vault under ...example/example... comme
     for (let j = 0; j < files.length; j++) {
       const fileName = files[j]
       // setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: '' }) // TODO
-      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`.../${domain.host}/${fileName}`).toString('utf8') }) // TODO
+      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`~/dev/certificates/${domain.host}/${fileName}`).toString('utf8') }) // TODO
     }
   }
 
