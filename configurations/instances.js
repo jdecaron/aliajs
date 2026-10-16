@@ -70,9 +70,23 @@ export const instances = [
         "operations": {
           "pre-build": [
             { command: async ({ c }) => {
-              await c.exec({ command: `cd ${c.data.temp} && git clone git@github.com:jdecaron/lienzo-core.git` })
-              await c.exec({ command: `cd ${c.data.temp}/lienzo-core && npm install --include=dev && npm run build` })
-              await c.exec({ command: `cp -r ${c.data.temp}/lienzo-core ${c.data.repository}/core` })
+              await c.exec({ command: `cd ${c.data.initInstancesTemp} && git clone git@github.com:jdecaron/lienzo-core.git` })
+              await c.exec({ command: `cd ${c.data.initInstancesTemp}/lienzo-core && npm install --include=dev && npm run build` })
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/repository/core` })
+            }},
+          ],
+        }
+      },
+      {
+        "name": "lienzo-backend",
+        "tier": "test",
+        "language": "typescript",
+        "type": "nodejs",
+        "remote_repository": "git@github.com:jdecaron/lienzo-backend.git",
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temo}/core` })
             }},
           ],
         }

@@ -81,6 +81,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
       exec,
       flags,
       initial: true,
+      initInstancesTemp,
       instance,
       service,
       ssh,
@@ -110,7 +111,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
 }
 
 export const initInstances = async ({ address, deployed, ephemeral, flags, instances, replace, response }) => {
-  const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
+  const initInstancesTemp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
 
@@ -121,7 +122,7 @@ export const initInstances = async ({ address, deployed, ephemeral, flags, insta
       instance = cloneInstance({ ephemeral, instance })
     }
 
-    const Reservations = await initInstance({ address, deployed, ephemeral, flags, instance, replace, response, temp })
+    const Reservations = await initInstance({ address, deployed, ephemeral, flags, instance, replace, response, initInstancesTemp })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
