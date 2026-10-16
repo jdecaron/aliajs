@@ -91,7 +91,7 @@ export const instances = [
           ],
           "initial": [
             { command: async ({ c }) => {
-              await c.ssh.new({ command: `cd ${c.data.home} && npx prisma generate` })
+              await c.ssh.new({ command: `cd ${c.data.home}/${c.data.unique_service_name} && npx prisma generate` })
             }},
           ],
         }
