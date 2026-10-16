@@ -89,6 +89,11 @@ export const instances = [
               await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/core` })
             }},
           ],
+          "initial": [
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `cd ${c.data.home} && npx prisma generate` })
+            }},
+          ],
         }
       },
     ]
