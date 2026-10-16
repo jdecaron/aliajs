@@ -51,6 +51,54 @@ export const instances = [
     ]
   },
   {
+    "name": "lienzo-test",
+    "services": [
+      {
+        "name": "lienzo-frontend",
+        "tier": "test",
+        "type": "nginx",
+        "remote_repository": "git@github.com:jdecaron/lienzo-frontend.git",
+        "domains": [
+          `lienzo-frontend-test.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "build": "http://127.0.0.1:8000",
+          },
+        ],
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cd ${c.data.initInstancesTemp} && git clone git@github.com:jdecaron/lienzo-core.git` })
+              await c.exec({ command: `cd ${c.data.initInstancesTemp}/lienzo-core && npm install --include=dev && npm run build` })
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/repository/core` })
+            }},
+          ],
+        }
+      },
+      {
+        "name": "lienzo-backend",
+        "tier": "test",
+        "language": "typescript",
+        "type": "nodejs",
+        "remote_repository": "git@github.com:jdecaron/lienzo-backend.git",
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/core` })
+            }},
+          ],
+          "initial": [
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `cd ${c.data.home}/${c.data.unique_service_name} && npx prisma generate` })
+            }},
+          ],
+        }
+      },
+    ]
+  },
+  {
     "name": "aliajs-production",
     "services": [
       {
