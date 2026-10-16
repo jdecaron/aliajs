@@ -21,6 +21,7 @@ const operations = {
         await c.ssh.new({ command: `echo '$MaxMessageSize 64k' | sudo tee -a /etc/rsyslog.conf` })
 
         await c.ssh.new({ command: 'sudo apt-get update' })
+        await c.ssh.new({ command: 'sudo apt-get -y install libatomic1' })
         await c.ssh.new({ command: 'sudo apt-get -y install restic' })
         await c.ssh.new({ command: 'sudo apt-get -y install nginx' })
         await c.ssh.new({ command: 'sudo apt-get -y install libnginx-mod-http-lua' })
@@ -48,7 +49,7 @@ export const images = [
     Name: process.env.ALIAJS_DEFAULT_IMAGE_NAME,
     operations: operations[process.env.ALIAJS_DEFAULT_IMAGE_NAME],
     data: {
-      nodejs: { major: '24' },
+      nodejs: { major: '26' },
       path: process.env.ALIAJS_DEFAULT_PATH,
       user: process.env.ALIAJS_DEFAULT_USER,
     },

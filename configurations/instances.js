@@ -51,6 +51,35 @@ export const instances = [
     ]
   },
   {
+    "name": "lienzo-test",
+    "services": [
+      {
+        "name": "lienzo-frontend",
+        "tier": "test",
+        "type": "nginx",
+        "remote_repository": "git@github.com:jdecaron/lienzo-frontend.git",
+        "domains": [
+          `lienzo.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "build": "http://127.0.0.1:8000",
+          },
+        ],
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cd ${c.data.temp} && git clone git@github.com:jdecaron/lienzo-core.git` })
+              await c.exec({ command: `cd ${c.data.temp}/lienzo-core && npm install --include=dev && npm run build` })
+              await c.exec({ command: `cp -r ${c.data.temp}/lienzo-core ${c.data.repository}/core` })
+            }},
+          ],
+        }
+      },
+    ]
+  },
+  {
     "name": "aliajs-production",
     "services": [
       {
