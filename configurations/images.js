@@ -37,6 +37,8 @@ const operations = {
         await c.ssh.new({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npm /usr/bin/npm` })
         await c.ssh.new({ command: `sudo ln -f -s ${path}/opt/${latestNode.path}/bin/npx /usr/bin/npx` })
 
+        await c.ssh.new({ command: 'sudo apt-get -y install postgresql' })
+
         await c.ssh.new({ command: 'sudo unattended-upgrade -d' })
       }},
     ],
