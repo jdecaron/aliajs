@@ -59,7 +59,7 @@ export const instances = [
         "type": "nginx",
         "remote_repository": "git@github.com:jdecaron/lienzo-frontend.git",
         "domains": [
-          `lienzo.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
+          `lienzo-frontend-test.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
         ],
         "locations": [
           {
