@@ -86,7 +86,7 @@ export const instances = [
         "operations": {
           "pre-build": [
             { command: async ({ c }) => {
-              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temo}/core` })
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/core` })
             }},
           ],
         }
