@@ -30,7 +30,7 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-export const initInstance = async ({ address, deployed = [], ephemeral, flags, instance, refresh, replace, response, initInstancesTemp }) => {
+export const initInstance = async ({ address, deployed = [], ephemeral, flags, initInstancesTemp, instance, refresh, replace, response }) => {
   const { services, type } = instance
 
   const imageName = instance.imageName || process.env.ALIAJS_DEFAULT_IMAGE_NAME
