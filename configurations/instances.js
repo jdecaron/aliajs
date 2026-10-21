@@ -51,15 +51,15 @@ export const instances = [
     ]
   },
   {
-    "name": "lienzo-test",
+    "name": "lienzo-dev",
     "services": [
       {
         "name": "lienzo-frontend",
-        "tier": "test",
+        "tier": "dev",
         "type": "nginx",
         "remote_repository": "git@github.com:jdecaron/lienzo-frontend.git",
         "domains": [
-          `lienzo-frontend-test.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
+          `lienzo-frontend-dev.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
         ],
         "locations": [
           {
@@ -79,7 +79,7 @@ export const instances = [
       },
       {
         "name": "lienzo-backend",
-        "tier": "test",
+        "tier": "dev",
         "language": "typescript",
         "type": "nodejs",
         "remote_repository": "git@github.com:jdecaron/lienzo-backend.git",
