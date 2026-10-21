@@ -122,7 +122,7 @@ export const initInstances = async ({ address, deployed, ephemeral, flags, insta
       instance = cloneInstance({ ephemeral, instance })
     }
 
-    const Reservations = await initInstance({ address, deployed, ephemeral, flags, instance, replace, response, initInstancesTemp })
+    const Reservations = await initInstance({ address, deployed, ephemeral, flags, initInstancesTemp, instance, replace, response })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
