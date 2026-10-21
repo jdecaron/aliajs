@@ -19,7 +19,7 @@ const log = logger(__filename)
 const lookup = util.promisify(dns.lookup)
 const eta = new Eta({ views: path.join(__dirname, '..', 'templates'), useWith: true, autoTrim: false })
 
-export async function nginx({ address, checkout, domain, exec, flags, initial, home, instance, service, ssh, user }) {
+export async function nginx({ address, checkout, domain, exec, flags, initial, initInstancesTemp, home, instance, service, ssh, user }) {
   const { domains, locations, remote_repository } = service
 
   const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
@@ -47,6 +47,10 @@ export async function nginx({ address, checkout, domain, exec, flags, initial, h
       } catch (error) {
         log.warn(`WARNING! could not parse build info from file, checkout value will be set to ${checkout} (it can be OK)`)
       }
+    }
+
+    if (initial) {
+      await operations({ data: { aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, temp }, exec, items, service, ssh, type: 'pre-build' })
     }
 
     builds[0].checkout = checkout
@@ -107,16 +111,16 @@ export async function nginx({ address, checkout, domain, exec, flags, initial, h
   await ssh.new({ command: `sudo cp -f ${home}/${unique}/sites-enabled/* /etc/nginx/sites-enabled/` })
 
   if (initial) {
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'initial' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'backup' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'restore' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'backup' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique }, exec, flags, items, service, ssh, type: 'restore' })
   }
 
   await ssh.new({ command: 'sudo nginx -t' })
   await ssh.new({ command: 'sudo service nginx reload' })
 }
 
-export async function nodejs({ address, checkout, domain, exec, home, initial, instance, service, ssh, user, websocket }) {
+export async function nodejs({ address, checkout, domain, exec, home, initial, initInstancesTemp, instance, service, ssh, user, websocket }) {
   if (checkout === undefined || checkout === '') {
     checkout = process.env.ALIAJS_DEFAULT_CHECKOUT
     try {
@@ -153,6 +157,11 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   await exec({ command: `git clone ${service.remote_repository} ${temp}`})
   await exec({ command: `cd ${temp} && git checkout ${checkout}` })
   await exec({ command: `cd ${temp} && ${command({ service, type: 'packages' })}` })
+
+  if (initial) {
+    await operations({ data: { aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, temp }, exec, items, service, ssh, type: 'pre-build' })
+  }
+
   await exec({ command: `cd ${temp} && ${command({ service, type: 'build' })}` })
 
   let port
@@ -218,11 +227,11 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
 
   if (initial) {
     await ssh.new({ command: `echo '127.0.0.1 ${server_name}' | sudo tee -a /etc/hosts` })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'initial' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'backup' })
-    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'restore' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'initial' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'backup' })
+    await operations({ data: { address, aliajs_key_name: process.env.ALIAJS_KEY_NAME, home, initInstancesTemp, instance, server_name, temp, unique_service_name }, exec, items, service, ssh, type: 'restore' })
   }
-  await operations({ data: { instance, unique_service_name }, exec, items, service, ssh, type: 'post-build' })
+  await operations({ data: { aliajs_key_name: process.env.ALIAJS_KEY_NAME, initInstancesTemp, instance, unique_service_name }, exec, items, service, ssh, type: 'post-build' })
 
   await ssh.new({ command: `sudo service ${unique_service_name} start` })
   await ssh.new({ command: `sudo systemctl enable ${unique_service_name}` })
