@@ -66,6 +66,10 @@ export const instances = [
             "location": "/",
             "build": "http://127.0.0.1:8000",
           },
+          {
+            "location": "/api/",
+            "proxy_pass": `https://lienzo-backend-dev.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}/api/`,
+          },
         ],
         "operations": {
           "pre-build": [
