@@ -306,7 +306,7 @@ async function execBuild({ build, exec, repository, service, staticBuilds }) {
   const buildIndex = (await exec({ command: `cd ${repository} && git rev-parse --verify HEAD` })).replace(/\s$/, '')
   if (fs.existsSync(`${staticBuilds}/${buildIndex}`) === false) {
     await exec({ command: `cd ${repository} && npm --production=false install` })
-    await exec({ command: `cd ${repository} && npm run build:${service}` })
+    await exec({ command: `cd ${repository} && npm run build:${service.tier}` })
     fs.writeFileSync(`${repository}/dist/build.json`, JSON.stringify(build))
     await exec({ command: `mv ${repository}/dist ${staticBuilds}/${buildIndex}` })
     await exec({ command: `rm -rf ${repository}/node_modules ${repository}/package-lock.json` })
