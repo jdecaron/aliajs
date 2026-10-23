@@ -185,14 +185,11 @@ try {
       value: publicKey,
     })
     await cloud.createKey({ key })
-    value = fs.readFileSync(keyPath).toString('utf8')
-    setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: value })
     const privateKey = fs.readFileSync(keyPath).toString('utf8')
     setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: privateKey })
     setItem({ items: items.operations, name: `${process.env.ALIAJS_KEY_NAME}.pub`, notes: publicKey })
 
     notes.push(`\n\nssh-keygen ${process.env.ALIAJS_KEY_NAME} 🔑\n`)
-    notes.push(value)
     notes.push(privateKey)
   }
 
