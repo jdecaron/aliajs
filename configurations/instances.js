@@ -51,6 +51,60 @@ export const instances = [
     ]
   },
   {
+    "name": "lienzo-dev",
+    "services": [
+      {
+        "name": "lienzo-frontend",
+        "tier": "dev",
+        "type": "nginx",
+        "remote_repository": "git@github.com:jdecaron/lienzo-frontend.git",
+        "domains": [
+          `lienzo-frontend-dev.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`,
+        ],
+        "locations": [
+          {
+            "location": "/",
+            "build": "http://127.0.0.1:8000",
+          },
+          {
+            "location": "/api/",
+            "proxy_pass": `https://lienzo-backend-dev.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}/api/`,
+          },
+        ],
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cd ${c.data.initInstancesTemp} && git clone git@github.com:jdecaron/lienzo-core.git` })
+              await c.exec({ command: `cd ${c.data.initInstancesTemp}/lienzo-core && npm install --include=dev && npm run build` })
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/repository/core` })
+            }},
+          ],
+        }
+      },
+      {
+        "name": "lienzo-backend",
+        "tier": "dev",
+        "language": "typescript",
+        "type": "nodejs",
+        "remote_repository": "git@github.com:jdecaron/lienzo-backend.git",
+        "operations": {
+          "pre-build": [
+            { command: async ({ c }) => {
+              await c.exec({ command: `cp -r ${c.data.initInstancesTemp}/lienzo-core ${c.data.temp}/core` })
+            }},
+          ],
+          "initial": [
+            { command: async ({ c }) => {
+              await c.ssh.new({ command: `sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"` })
+              await c.ssh.new({ command: `cd ${c.data.home}/${c.data.unique_service_name} && npx prisma generate` })
+              await c.ssh.new({ command: `cd ${c.data.home}/${c.data.unique_service_name} && npx prisma migrate deploy` })
+            }},
+          ],
+        }
+      },
+    ]
+  },
+  {
     "name": "aliajs-production",
     "services": [
       {

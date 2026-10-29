@@ -21,6 +21,7 @@ const notes = [
   '\n\nSave these informations in your personal secure information vault 🔐',
 ]
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
+const vaultNotes = []
 
 try {
   let value
@@ -262,9 +263,11 @@ try {
         await c.ssh.new({ command: 'sudo service nginx reload' })
 
         notes.push('\n\nVaultwarden Accounts 🔐')
+        vaultNotes.push('\n\nVaultwarden Accounts 🔐')
         for (let account of accounts) {
           try {
             notes.push(`\n\nAccount: ${account.email}\nPassword: ${account.password}`)
+            vaultNotes.push(`\n\nAccount: ${account.email}\nPassword: ${account.password}`)
             await newItems({ address: c.data.instance.PublicIpAddress, email: account.email, items: account.items, password: account.password, shell, type: account.type, variables })
           } catch (error) {
             console.error(error)
@@ -295,6 +298,24 @@ try {
         baseURL: import.meta.url,
       })
       await initInstances({ deployed, instances: [instanceClone], replace: true })
+
+      {
+        console.log(`\n\nDeployed vault service: ${deployed[deployed.length - 1]}`)
+        for (const note of vaultNotes) {
+          process.stdout.write(note)
+        }
+        value = await select({
+          message: `\n\nImport vaultwarden data (Bitwarden json), \nGitHub, add SSH key ${process.env.ALIAJS_KEY_NAME}.pub`,
+          options: [
+            { value: 'CONTINUE', label: 'Continue' },
+          ],
+        })
+
+        if (isCancel(value)) {
+          cancel('Operation cancelled')
+          process.exit(0)
+        }
+      }
 
       // Assigning a property on process.env will implicitly convert the value to a string.
       // This behavior is deprecated. Future versions of Node.js may throw an error when the value is not a string, number, or boolean.
