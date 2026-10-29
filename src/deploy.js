@@ -206,7 +206,7 @@ export async function nodejs({ address, checkout, domain, exec, home, initial, i
   const locations = [{ location: '/', proxy_pass: `http://127.0.0.1:${port}` }]
   if (service.name === 'aliajs') {
     locations[0].proxy_read_timeout = '500s'
-    fs.appendFileSync(`${temp}/.env`, `\nALIAJS_VARIABLE_0=${process.env.ALIAJS_VARIABLE_0}\nALIAJS_VARIABLE_1=${process.env.ALIAJS_VARIABLE_1}\nALIAJS_VARIABLE_2=${process.env.ALIAJS_VARIABLE_2}`)
+    fs.appendFileSync(`${temp}/.env`, `\nALIAJS_DEFAULT_TOP_LEVEL_DOMAIN=${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}\nALIAJS_VARIABLE_0=${process.env.ALIAJS_VARIABLE_0}\nALIAJS_VARIABLE_1=${process.env.ALIAJS_VARIABLE_1}\nALIAJS_VARIABLE_2=${process.env.ALIAJS_VARIABLE_2}`)
   }
 
   const domains = service.domains || [server_name]
