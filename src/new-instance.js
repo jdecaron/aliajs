@@ -7,7 +7,7 @@ import util from 'util'
 import * as cloud from './cloud/cloud.js'
 import * as deploy from './deploy.js'
 import { getNotes, items, sauce } from './items.js'
-import { cloneInstance, delay, getDomain, exec, SSH } from './utils.js'
+import { cloneInstance, delay, getDomain, exec, SSH, waitForInstance } from './utils.js'
 import * as configurations from '../configurations/instances.js'
 import logger from './logger.js'
 
@@ -65,6 +65,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
     current: SSH({ address: currentAddress, keyName, instance, response, sauce }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response, sauce }),
   }
+  await waitForInstance({ ssh })
 
   for (let item of items.operations) {
     const name = item.name
