@@ -39,7 +39,7 @@ export const renewCertificates = async () => {
       const zone = domain
       await exec({ command: `scp -q -i ~/.ssh/${process.env.ALIAJS_KEY_NAME} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null cli/certbot/${host.cloud}/authenticator.sh cli/certbot/${host.cloud}/cleanup.sh ubuntu@${instance.PublicIpAddress}:${temp}` })
       await ssh.current({ command: `chmod a+x ${temp}/*.sh` })
-      await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, sauce: [ token ] })
+      await ssh.current({ command: `export ZONE=${zone}; export API_KEY=${token}; sudo -E certbot certonly -v -n -m certbot@${host.host} --agree-tos --manual --preferred-challenges=dns --manual-auth-hook ${temp}/authenticator.sh --manual-cleanup-hook ${temp}/cleanup.sh --force-renewal ${list}`, sauce: [ token ] }) // --force-renewal --test-cert
     } else {
       await ssh.current({ command: `sudo certbot certonly -n -m certbot@${host.host} --agree-tos --nginx --force-renewal ${list}`, sauce: [] })
     }

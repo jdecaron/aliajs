@@ -20,6 +20,7 @@ export const getItem = ({ items, name }) => {
     const item = items[i]
     if (item.name === name) {
       if (not.indexOf(name) === -1 && item?.notes !== undefined && sauce.indexOf(item?.notes) === -1) {
+        // not === variable list that can be shown, sauce is used by utils.hide()
         sauce.push(item?.notes)
       }
       return item

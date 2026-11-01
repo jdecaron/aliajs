@@ -41,9 +41,8 @@ export const getDomain = ({ domain }) => {
 }
 
 export const getCloudAPItoken = ({ cloud }) => {
-  if (cloud === 'hetzner') {
-    return process.env.HETZNER_API_TOKEN
-  }
+  const name = `${cloud}_API_TOKEN`
+  return process.env[name]
 }
 
 export const getLatestNode = ({ major }) => {

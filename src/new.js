@@ -23,6 +23,7 @@ const notes = [
 const uniqueString = utils.getUniqueString({ characters: 'abcdefghijklmnopqrstuvwxyz0123456789', length: 4 })
 
 try {
+  const ALIAJS_CLOUD_LIST = []
   let value
   {
     value = await text({
@@ -39,6 +40,7 @@ try {
       const match = []
       for (const c of cloud.list) {
         if (nameServer.indexOf(c.nameServer) >= 0) {
+          process.env.ALIAJS_DEFAULT_CLOUD_NAME_SERVER = c.name
           match.push(nameServer)
         }
       }
@@ -47,10 +49,26 @@ try {
     if (matchNameServer.length > 0) {
       process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN = value
       setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN', notes: value })
+      setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_CLOUD_NAME_SERVER', notes: process.env.ALIAJS_DEFAULT_CLOUD_NAME_SERVER })
     } else {
       cancel(`Domain name '${value}' is set to ${nameServers?.[0]} (name server), not supported by AliaJS`)
       console.log('For more details read the prerequisites: https://aliajs.com/self-host/#prerequisites')
       process.exit(0)
+    }
+
+    if (process.env.ALIAJS_DEFAULT_CLOUD_NAME_SERVER === 'CLOUDFLARE') {
+      value = await password({
+        message: `What is your Cloudflare API key (token)?`,
+      })
+
+      if (isCancel(value)) {
+        cancel('Operation cancelled')
+        process.exit(0)
+      }
+
+      ALIAJS_CLOUD_LIST.push('CLOUDFLARE')
+      process.env['CLOUDFLARE_API_TOKEN'] = value
+      setItem({ items: items.operations, name: 'CLOUDFLARE_API_TOKEN', notes: value })
     }
   }
 
@@ -66,23 +84,28 @@ try {
     process.exit(0)
   }
 
+  ALIAJS_CLOUD_LIST.push(value)
   process.env.ALIAJS_DEFAULT_CLOUD = value
+  setItem({ items: items.operations, name: 'ALIAJS_CLOUD_LIST', notes: JSON.stringify(ALIAJS_CLOUD_LIST) })
   setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_CLOUD', notes: value })
 
-  value = await password({
-    message: `What is your ${value} API key (token)?`,
-  })
+  if (process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] === undefined) {
+    value = await password({
+      message: `What is your ${value} API key (token)?`,
+    })
 
-  if (isCancel(value)) {
-    cancel('Operation cancelled')
-    process.exit(0)
+    if (isCancel(value)) {
+      cancel('Operation cancelled')
+      process.exit(0)
+    }
+
+    process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] = value
   }
 
-  process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] = value
-  setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`, notes: value })
+  setItem({ items: items.operations, name: `${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`, notes: process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`] })
 
   notes.push(`\n\nCloud ☁️`)
-  notes.push(`\n${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN: ${value}`)
+  notes.push(`\n${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN: ${process.env[`${process.env.ALIAJS_DEFAULT_CLOUD}_API_TOKEN`]}`)
 
   // Leaving low hanging fruits for the community 🫐
   {
@@ -112,6 +135,7 @@ try {
       message: 'Set your default cloud machine type.',
       options: [
         { value: 'cx23', label: 'CX23, 2VCPUS, 4GB' },
+        { value: 'cpx22', label: 'CPX22, 2VCPUS, 4GB' },
       ],
     })
 
@@ -122,6 +146,10 @@ try {
 
     process.env.ALIAJS_DEFAULT_INSTANCE_TYPE = value
     setItem({ items: items.operations, name: 'ALIAJS_DEFAULT_INSTANCE_TYPE', notes: value })
+  }
+
+  {
+    await cloud.upsertDNSZone({ cloud: process.env.ALIAJS_DEFAULT_CLOUD_NAME_SERVER, name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
   }
 
   {
@@ -193,10 +221,6 @@ try {
   }
 
   await newImage()
-
-  {
-    await cloud.upsertDNSZone({ name: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
-  }
 
   {
     process.env.RESTORE_VALIDATION = 'f659c85a'
