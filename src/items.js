@@ -67,7 +67,10 @@ export const getItems = ({ variables }) => {
       child_process.execSync('bw logout')
     } catch (error) {
       log.error({ error, channel: 'operations' })
-      child_process.execSync('bw logout')
+      // Throwing a logout error is higlhy probable ... bw logout
+      // when already logged out throws a program error ... logout attempt
+      // is desired but not required.
+      try { child_process.execSync('bw logout') } catch {}
       throw Error(`getItems: Could not get items for '${variables?.[0]}'`)
     }
 

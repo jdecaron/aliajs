@@ -7,7 +7,7 @@ import util from 'util'
 import * as cloud from './cloud/cloud.js'
 import * as deploy from './deploy.js'
 import { getNotes, items, sauce } from './items.js'
-import { cloneInstance, delay, getDomain, exec, SSH } from './utils.js'
+import { cloneInstance, delay, getDomain, exec, SSH, waitForInstance } from './utils.js'
 import * as configurations from '../configurations/instances.js'
 import logger from './logger.js'
 
@@ -30,7 +30,7 @@ const installSSLCertificates = async ({ service, ssh }) => {
   }
 }
 
-export const initInstance = async ({ address, deployed = [], ephemeral, flags, instance, refresh, replace, response, temp }) => {
+export const initInstance = async ({ address, deployed = [], ephemeral, flags, initInstancesTemp, instance, refresh, replace, response }) => {
   const { services, type } = instance
 
   const imageName = instance.imageName || process.env.ALIAJS_DEFAULT_IMAGE_NAME
@@ -65,6 +65,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
     current: SSH({ address: currentAddress, keyName, instance, response, sauce }),
     new: SSH({ address: Reservations[0].Instances[0].PublicIpAddress, keyName, instance: Reservations[0].Instances[0], response, sauce }),
   }
+  await waitForInstance({ ssh })
 
   for (let item of items.operations) {
     const name = item.name
@@ -81,6 +82,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
       exec,
       flags,
       initial: true,
+      initInstancesTemp,
       instance,
       service,
       ssh,
@@ -110,7 +112,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
 }
 
 export const initInstances = async ({ address, deployed, ephemeral, flags, instances, replace, response }) => {
-  const temp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
+  const initInstancesTemp = (await exec({ command: 'mktemp -d' })).replace(/\s$/, '')
 
   const runningReservations = await cloud.describeInstances()
 
@@ -121,7 +123,7 @@ export const initInstances = async ({ address, deployed, ephemeral, flags, insta
       instance = cloneInstance({ ephemeral, instance })
     }
 
-    const Reservations = await initInstance({ address, deployed, ephemeral, flags, instance, replace, response, temp })
+    const Reservations = await initInstance({ address, deployed, ephemeral, flags, initInstancesTemp, instance, replace, response })
 
     if (replace === true) {
       // Cloud instance deletion is the last thing to run for some reasons.
