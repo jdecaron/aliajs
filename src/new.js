@@ -178,16 +178,18 @@ try {
     const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
     child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
 
+    const publicKey = fs.readFileSync(`${keyPath}.pub`).toString('utf8')
     key = utils.deepFreeze({
       name: process.env.ALIAJS_KEY_NAME,
-      value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
+      value: publicKey,
     })
     await cloud.createKey({ key })
-    value = fs.readFileSync(keyPath).toString('utf8')
-    setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: value })
+    const privateKey = fs.readFileSync(keyPath).toString('utf8')
+    setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: privateKey })
+    setItem({ items: items.operations, name: `${process.env.ALIAJS_KEY_NAME}.pub`, notes: publicKey })
 
     notes.push(`\n\nssh-keygen ${process.env.ALIAJS_KEY_NAME} 🔑\n`)
-    notes.push(value)
+    notes.push(privateKey)
   }
 
   await newImage()

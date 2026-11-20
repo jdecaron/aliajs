@@ -10,19 +10,22 @@ ssh-keygen
   const keyPath = `${os.homedir()}/.ssh/${process.env.ALIAJS_KEY_NAME}`
   // child_process.execSync(`ssh-keygen -t ed25519 -f ${keyPath} -C "${process.env.ALIAJS_KEY_NAME}" -N ""`)
 
+  const publicKey = fs.readFileSync(`${keyPath}.pub`).toString('utf8')
   key = utils.deepFreeze({
     name: process.env.ALIAJS_KEY_NAME,
-    value: fs.readFileSync(`${keyPath}.pub`).toString('utf8'),
+    value: publicKey,
   })
   // await cloud.createKey({ key })
-  setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: fs.readFileSync(keyPath).toString('utf8') })
+  const privateKey = fs.readFileSync(keyPath).toString('utf8')
+  setItem({ items: items.operations, name: process.env.ALIAJS_KEY_NAME, notes: privateKey })
+  setItem({ items: items.operations, name: `${process.env.ALIAJS_KEY_NAME}.pub`, notes: publicKey })
 
   notes.push(`\n\nssh-keygen ${process.env.ALIAJS_KEY_NAME} 🔑\n`)
-  notes.push(value)
+  notes.push(privateKey)
 }
 ```
 
-newImage() & upsertDNSZone()
+## newImage() & upsertDNSZone()
 ```js
 // await newImage()
 
@@ -32,7 +35,7 @@ newImage() & upsertDNSZone()
 ```
 
 ## renewCertificates()
-Save your certificates locally from your vault under ...example/example... comment out renewCertificates(), replace empty setItem with local files:
+Save your certificates locally from your vault under a local folder (example `~/dev/certificates/example.com`), comment out renewCertificates(), replace empty setItem with local files:
 ```js src/new.js
 {
   for (const domain of domains) {
@@ -40,7 +43,7 @@ Save your certificates locally from your vault under ...example/example... comme
     for (let j = 0; j < files.length; j++) {
       const fileName = files[j]
       // setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: '' }) // TODO
-      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`.../${domain.host}/${fileName}`).toString('utf8') }) // TODO
+      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`~/dev/certificates/${domain.host}/${fileName}`).toString('utf8') }) // TODO
     }
   }
 
