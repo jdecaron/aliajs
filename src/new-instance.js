@@ -96,7 +96,7 @@ export const initInstance = async ({ address, deployed = [], ephemeral, flags, i
         await cloud.upsertARecord({ instance, name: `${service.name}-${service.tier}`, zone: process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN })
         const URL = `https://${service.name}-${service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`
         deployed.push(URL)
-        console.log(`Deployed: ${URL}`)
+        await ssh.new({ command: `# Deployed: ${URL}` })
       }
       if (ephemeral) {
         // New name, no need to wait for the record TTL to expire

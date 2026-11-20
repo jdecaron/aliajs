@@ -198,7 +198,7 @@ export async function lazyImport({ specifier, baseURL }) {
 }
 
 export async function operations({ data, exec, flags, items, operations, sauce, service, ssh, type }) {
-  const c = { data, exec, flags, items, sauce: items.sauce, service, ssh, type }
+  const c = { data, eta, exec, flags, items, sauce: items.sauce, service, ssh, type }
   const targets = {
     current: ssh.current,
     new: ssh.new,
