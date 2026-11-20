@@ -39,7 +39,7 @@ export const instances = [
             { command: async ({ c }) => {
               await c.ssh.new({ command: `sudo mysqladmin --user=root password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes}`, sauce: c.sauce  })
               await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench new-site --db-root-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_DB_ROOT_PASSWORD' }).notes} --admin-password ${c.items.getItem({ items: c.items.items.operations, name: 'FRAPPE_ADMIN_PASSWORD' }).notes} ${c.service.name}-${c.service.tier}.${process.env.ALIAJS_DEFAULT_TOP_LEVEL_DOMAIN}`, sauce: c.sauce })
-              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && sudo bench setup supervisor` })
+              await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && sudo env "PATH=${c.data.home}/bin:$PATH" bench setup supervisor` })
               await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && sudo cp config/supervisor.conf /etc/supervisor/conf.d/` })
               await c.ssh.new({ command: `sudo supervisorctl reload` })
               await c.ssh.new({ command: `cd ${c.data.home}/frappe-bench && bench get-app erpnext --branch version-15` })
