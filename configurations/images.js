@@ -1,6 +1,6 @@
 import { getLatestNode, installNode } from '../src/utils.js'
 
-const operations = {
+const templates = {
   [process.env.ALIAJS_DEFAULT_IMAGE_NAME]: {
     initial: [
       { command: async ({ c }) => {
@@ -46,7 +46,34 @@ export const images = [
   {
     ImageId: process.env.ALIAJS_DEFAULT_IMAGE_ID,
     Name: process.env.ALIAJS_DEFAULT_IMAGE_NAME,
-    operations: operations[process.env.ALIAJS_DEFAULT_IMAGE_NAME],
+    operations: templates[process.env.ALIAJS_DEFAULT_IMAGE_NAME],
+    data: {
+      nodejs: { major: '24' },
+      path: process.env.ALIAJS_DEFAULT_PATH,
+      user: process.env.ALIAJS_DEFAULT_USER,
+    },
+  },
+  {
+    ImageId: process.env.ALIAJS_DEFAULT_IMAGE_ID,
+    Name: 'aliajs-erpnext-15',
+    operations: (() => {
+      return {
+        initial: templates[process.env.ALIAJS_DEFAULT_IMAGE_NAME].initial.concat(
+          { command: "sudo apt-get update", target: "new" },
+          { command: "sudo apt-get -y install file git python-is-python3 python3-dev python3-pip redis-server pkg-config", target: "new" },
+          { command: "sudo apt-get -y install mariadb-server mariadb-client libmariadb-dev", target: "new" },
+          { command: "sudo apt-get -y install supervisor", target: "new" },
+          { command: "sudo apt-get -y install python3-venv", target: "new" },
+          { command: "npm install -g yarn", target: "new" },
+          { command: "sudo ln -f -s <%= path %>/opt/node-v*/bin/yarn /usr/bin/yarn", target: "new" },
+          { command: "python3 -m venv <%= path %>", target: "new" },
+          { command: `echo 'PATH="<%= path %>/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"' | sudo tee /etc/environment`, target: "new" },
+          { command: "sudo <%= path %>/bin/pip3 install frappe-bench", target: "new" },
+          { command: "cd <%= path %> && bench init frappe-bench --frappe-branch version-15", target: "new" },
+          { command: "cd <%= path %>/frappe-bench && bench build", target: "new" },
+        )
+      }
+    })(),
     data: {
       nodejs: { major: '24' },
       path: process.env.ALIAJS_DEFAULT_PATH,
