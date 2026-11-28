@@ -43,7 +43,7 @@ Save your certificates locally from your vault under a local folder (example `~/
     for (let j = 0; j < files.length; j++) {
       const fileName = files[j]
       // setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: '' }) // TODO
-      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`~/dev/certificates/${domain.host}/${fileName}`).toString('utf8') }) // TODO
+      setItem({ items: items.certificates, name: `${domain.host}/${fileName}`, notes: fs.readFileSync(`${os.homedir()}/dev/certificates/${domain.host}/${fileName}`).toString('utf8') }) // TODO
     }
   }
 
